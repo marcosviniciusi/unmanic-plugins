@@ -74,12 +74,16 @@ class PluginStreamMapper(StreamMapper):
         # Build default options of standard mode
         if self.settings.get_setting('mode') == 'standard':
 
-            # Set max muxing queue size
+            # Set max muxing queue size and metadata
+            advanced_kwargs = {}
             if self.settings.get_setting('max_muxing_queue_size'):
-                advanced_kwargs = {
-                    '-max_muxing_queue_size': str(self.settings.get_setting('max_muxing_queue_size'))
-                }
-                self.set_ffmpeg_advanced_options(**advanced_kwargs)
+                advanced_kwargs['-max_muxing_queue_size'] = str(self.settings.get_setting('max_muxing_queue_size'))
+            
+            # Add metadata tag automatically
+            advanced_kwargs['-metadata'] = 'unmanic_status=processed'
+            
+            self.set_ffmpeg_advanced_options(**advanced_kwargs)
+            tools.append_worker_log(self.worker_log, "Adding metadata tag 'unmanic_status=processed'")
 
             # Check for config specific settings
             if self.settings.get_setting('apply_smart_filters'):
