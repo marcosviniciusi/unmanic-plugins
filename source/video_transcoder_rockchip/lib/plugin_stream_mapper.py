@@ -83,7 +83,6 @@ class PluginStreamMapper(StreamMapper):
             advanced_kwargs['-metadata'] = 'unmanic_status=processed'
             
             self.set_ffmpeg_advanced_options(**advanced_kwargs)
-            tools.append_worker_log(self.worker_log, "Adding metadata tag 'unmanic_status=processed'")
 
             # Check for config specific settings
             if self.settings.get_setting('apply_smart_filters'):
