@@ -13,7 +13,7 @@ Repository ID: `repository.vinicima` (defined in `config.json`).
 |---|---|---|---|---|
 | `video_transcoder` | Video Transcoder - HW Accelerated with Metadata | 0.3.0 | Josh.5 | Video |
 | `audio_transcoder` | Audio Transcoder - EAC3 5.1 (Dolby Digital Plus) | 1.1.0 | Josh.5 | Audio |
-| `audio_transcode_to_stereo` | Audio Transcode to Stereo - Surround Sound Downmix | 0.1.0 | Josh.5 | Audio |
+| `audio_transcode_create_stereo` | Audio Transcode Create Stereo - Surround Sound Downmix | 0.1.1 | Josh.5 | Audio |
 | `subtitles_transcode` | Subtitles Transcode - Keep PT-BR Only | 3.4.0 | marcosviniciusi | Subtitle |
 
 ### Filter / Ignore Plugins
@@ -30,7 +30,7 @@ Repository ID: `repository.vinicima` (defined in `config.json`).
 Plugin IDs follow this pattern to avoid conflicts with the official Unmanic repository:
 
 - **Video**: `video_transcoder` (kept original, unique due to custom repo)
-- **Audio**: `audio_transcoder`, `audio_transcode_to_stereo` (category + action)
+- **Audio**: `audio_transcoder`, `audio_transcode_create_stereo` (category + action)
 - **Subtitles**: `subtitles_transcode` (category + action)
 - **Ignore/Filters**: `ignore_` prefix (e.g., `ignore_completed_tasks`, `ignore_metadata_unmanic`)
 
@@ -41,7 +41,7 @@ Plugin IDs follow this pattern to avoid conflicts with the official Unmanic repo
 | Previous ID | Previous Dir | New ID / Dir |
 |---|---|---|
 | `dts_to_dd` | `audio_to_EAC3` | `audio_transcoder` |
-| `create_stereo_audio_clone` | `create_stereo_audio_clone` | `audio_transcode_to_stereo` |
+| `create_stereo_audio_clone` | `create_stereo_audio_clone` | `audio_transcode_create_stereo` |
 | `equalize_subtitles_ptbr` | `equalize_subtitles_ptbr` | `subtitles_transcode` |
 | `video_transcoder` | `video_transcoder` | `video_transcoder` (unchanged) |
 | `ignore_completed_tasks` | `ignore_completed_tasks` | `ignore_completed_tasks` (unchanged) |
@@ -72,7 +72,7 @@ unmanic-plugins/
     │   ├── plugin.py
     │   ├── lib/ffmpeg/
     │   └── ...
-    ├── audio_transcode_to_stereo/      # Surround to stereo downmix
+    ├── audio_transcode_create_stereo/      # Surround to stereo downmix
     │   ├── info.json
     │   ├── plugin.py
     │   ├── lib/ffmpeg/
@@ -107,7 +107,7 @@ unmanic-plugins/
 
 - [x] Explored and documented all 8 plugins
 - [x] Renamed `audio_to_EAC3` (id: `dts_to_dd`) -> `audio_transcoder`
-- [x] Renamed `create_stereo_audio_clone` -> `audio_transcode_to_stereo`
+- [x] Renamed `create_stereo_audio_clone` -> `audio_transcode_create_stereo`
 - [x] Renamed `equalize_subtitles_ptbr` -> `subtitles_transcode`
 - [x] Kept `video_transcoder` and all `ignore_*` plugins with original IDs
 - [x] Updated all `info.json` files with new IDs, names, versions, and author attribution

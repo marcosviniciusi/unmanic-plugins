@@ -1,3 +1,6 @@
+**<span style="color:#56adda">0.1.1</span>** *(marcosviniciusi)*
+- Renamed plugin from `audio_transcode_to_stereo` to `audio_transcode_create_stereo` (better reflects the "create" action)
+
 **<span style="color:#56adda">0.1.0</span>** *(marcosviniciusi)*
 - Renamed plugin from `create_stereo_audio_clone` to `audio_transcode_to_stereo` for unique identification
 - Updated plugin ID, name and tags to avoid conflicts with official repository

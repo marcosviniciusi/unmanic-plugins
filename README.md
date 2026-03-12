@@ -15,7 +15,7 @@ Custom plugins for [Unmanic](https://docs.unmanic.app/docs/).
 | Plugin ID | Name | Description |
 |---|---|---|
 | `audio_transcoder` | Audio Transcoder - EAC3 5.1 (Dolby Digital Plus) | Convert DTS, FLAC, Opus and Vorbis audio to EAC3 5.1 |
-| `audio_transcode_to_stereo` | Audio Transcode to Stereo - Surround Sound Downmix | Create stereo clone from surround sound audio streams |
+| `audio_transcode_create_stereo` | Audio Transcode Create Stereo - Surround Sound Downmix | Create stereo clone from surround sound audio streams |
 
 ### Subtitle Processing
 
