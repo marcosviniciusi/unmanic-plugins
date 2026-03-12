@@ -1,3 +1,8 @@
+**<span style="color:#56adda">1.1.0</span>** *(marcosviniciusi)*
+- Renamed plugin from `dts_to_dd` to `audio_transcoder` for unique identification
+- Updated plugin ID, name and tags to avoid conflicts with official repository
+- Standardized author attribution
+
 **<span style="color:#56adda">1.0.0</span>**
 - Rewritten based on Josh.5's original dts_to_dd plugin
 - Converts DTS, FLAC, Opus and Vorbis to EAC3 5.1 (Dolby Digital Plus)

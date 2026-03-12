@@ -1,3 +1,8 @@
+**<span style="color:#56adda">0.3.0</span>** *(marcosviniciusi)*
+- Standardized plugin name and author attribution for custom repository
+- Updated tags and description for better discoverability
+- Plugin ID kept as `video_transcoder` (no conflict with official repo due to separate repository)
+
 **<span style="color:#56adda">0.2.2</span>**
 - Updated README.md with comprehensive VideoToolbox documentation
 - Updated description.md with VideoToolbox encoder information and usage guidelines

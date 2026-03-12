@@ -1,16 +1,16 @@
 {
-    "author": "Marcos Gabriel (VideoToolbox support)",
+    "author": "Josh.5 / marcosviniciusi",
     "compatibility": [
         2
     ],
-    "description": "Transcode the video streams of a video file",
+    "description": "Transcode the video streams of a video file with HW acceleration and metadata support",
     "icon": "https://raw.githubusercontent.com/Unmanic/plugin.video_transcoder/master/icon.png",
     "id": "video_transcoder",
-    "name": "Transcode Video Files with HW With Metadata",
+    "name": "Video Transcoder - HW Accelerated with Metadata",
     "priorities": {
         "on_library_management_file_test": 10,
         "on_worker_process": 1
     },
-    "tags": "video,ffmpeg",
-    "version": "0.2.2"
+    "tags": "video,ffmpeg,hw acceleration,library file test",
+    "version": "0.3.0"
 }
