@@ -15,7 +15,7 @@ Custom plugins for [Unmanic](https://docs.unmanic.app/docs/).
 | Plugin ID | Name | Description |
 |---|---|---|
 | `audio_transcoder` | Audio Transcoder - EAC3 5.1 (Dolby Digital Plus) | Convert DTS, FLAC, Opus and Vorbis audio to EAC3 5.1 |
-| `audio_transcode_to_stereo` | Audio Transcode to Stereo - Surround Sound Downmix | Create stereo clone from surround sound audio streams |
+| `audio_transcode_create_stereo` | Audio Transcode Create Stereo - Surround Sound Downmix | Create stereo clone from surround sound audio streams |
 
 ### Subtitle Processing
 
@@ -27,10 +27,16 @@ Custom plugins for [Unmanic](https://docs.unmanic.app/docs/).
 
 | Plugin ID | Name | Description |
 |---|---|---|
-| `ignore_completed_tasks` | Ignore - Completed Tasks | Skip files already in completed tasks list |
+| `ignore_task_history` | Ignore - Task History | Skip files already in completed tasks list |
 | `ignore_metadata_unmanic` | Ignore - Metadata Processed | Skip files with UNMANIC_STATUS=processed metadata |
-| `ignore_video_file_over_resolution` | Ignore - Video Over Resolution Limit | Skip files exceeding configured resolution |
-| `ignore_video_file_under_resolution` | Ignore - Video Under Resolution Limit | Skip files below configured resolution |
+| `ignore_video_over_res` | Ignore - Video Over Resolution Limit | Skip files exceeding configured resolution |
+| `ignore_video_under_res` | Ignore - Video Under Resolution Limit | Skip files below configured resolution |
+
+### Post-Processor Plugins
+
+| Plugin ID | Name | Description |
+|---|---|---|
+| `postprocessor_otel_trace` | Post-Processor - OpenTelemetry Task Trace | Send task telemetry (traces/spans) to SigNoz, Jaeger, Grafana Tempo via OTLP HTTP |
 
 ## Installation
 

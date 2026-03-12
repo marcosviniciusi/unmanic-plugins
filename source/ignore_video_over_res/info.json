@@ -5,11 +5,11 @@
     ],
     "description": "Ignore files over the configured video resolution.",
     "icon": "https://raw.githubusercontent.com/Josh5/unmanic.plugin.ignore_video_file_over_resolution/master/icon.png",
-    "id": "ignore_video_file_over_resolution",
+    "id": "ignore_video_over_res",
     "name": "Ignore - Video Over Resolution Limit",
     "priorities": {
         "on_library_management_file_test": 0
     },
     "tags": "library file test,ignore,filter,resolution",
-    "version": "0.0.3"
+    "version": "0.0.4"
 }

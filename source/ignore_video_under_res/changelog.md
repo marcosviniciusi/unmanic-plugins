@@ -1,3 +1,6 @@
+**<span style="color:#56adda">0.0.4</span>** *(marcosviniciusi)*
+- Renamed plugin from `ignore_video_file_under_resolution` to `ignore_video_under_res` to avoid conflict with official repo
+
 **<span style="color:#56adda">0.0.3</span>** *(marcosviniciusi)*
 - Standardized plugin name to "Ignore - Video Under Resolution Limit" for consistent naming
 - Updated author attribution for custom repository
