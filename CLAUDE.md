@@ -16,6 +16,12 @@ Repository ID: `repository.vinicima` (defined in `config.json`).
 | `audio_transcode_create_stereo` | Audio Transcode Create Stereo - Surround Sound Downmix | 0.1.1 | Josh.5 | Audio |
 | `subtitles_transcode` | Subtitles Transcode - Keep PT-BR Only | 3.4.0 | marcosviniciusi | Subtitle |
 
+### Post-Processor Plugins
+
+| Dir / Plugin ID | Name | Version | Original Author | Category |
+|---|---|---|---|---|
+| `postprocessor_otel_trace` | Post-Processor - OpenTelemetry Task Trace | 0.1.0 | marcosviniciusi | Observability |
+
 ### Filter / Ignore Plugins
 
 | Dir / Plugin ID | Name | Version | Original Author |
@@ -33,6 +39,7 @@ Plugin IDs follow this pattern to avoid conflicts with the official Unmanic repo
 - **Audio**: `audio_transcoder`, `audio_transcode_create_stereo` (category + action)
 - **Subtitles**: `subtitles_transcode` (category + action)
 - **Ignore/Filters**: `ignore_` prefix (e.g., `ignore_task_history`, `ignore_metadata_unmanic`, `ignore_video_over_res`)
+- **Post-Processors**: `postprocessor_` prefix (e.g., `postprocessor_otel_trace`)
 
 **Rule**: `{category}_{action}` or `ignore_{what_is_filtered}`
 
@@ -85,7 +92,8 @@ unmanic-plugins/
     ├── ignore_task_history/             # Filter: skip completed tasks
     ├── ignore_metadata_unmanic/        # Filter: skip processed metadata
     ├── ignore_video_over_res/          # Filter: skip high-res
-    └── ignore_video_under_res/         # Filter: skip low-res
+    ├── ignore_video_under_res/         # Filter: skip low-res
+    └── postprocessor_otel_trace/       # Post-processor: OTEL traces to SigNoz
 ```
 
 ## Key Files per Plugin
@@ -99,7 +107,7 @@ unmanic-plugins/
 ## Unmanic Plugin Rules
 
 1. **Directory name must match `info.json` `id` field** - this is how Unmanic identifies plugins
-2. **Plugin hooks**: `on_library_management_file_test` (file scanning), `on_worker_process` (processing)
+2. **Plugin hooks**: `on_library_management_file_test` (file scanning), `on_worker_process` (processing), `on_postprocessor_task_results` (after task completes)
 3. **Compatibility**: v1 (legacy) and/or v2 (current)
 4. **Settings**: Managed via `PluginSettings` class with `settings_dict` and `form_settings`
 
@@ -117,6 +125,7 @@ unmanic-plugins/
 - [x] Updated all `changelog.md` files preserving original history
 - [x] Updated main `README.md` with organized plugin table
 - [x] Created `CLAUDE.md` documentation
+- [x] Created `postprocessor_otel_trace` plugin for OpenTelemetry task tracing (SigNoz/Jaeger/Tempo)
 
 ## Future Tasks / Considerations
 

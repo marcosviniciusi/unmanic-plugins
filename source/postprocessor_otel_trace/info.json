@@ -1,0 +1,18 @@
+{
+    "author": "marcosviniciusi",
+    "compatibility": [
+        2
+    ],
+    "description": "Send completed task telemetry (traces/spans) to an OpenTelemetry-compatible backend (SigNoz, Jaeger, etc.) via OTLP HTTP.",
+    "icon": "",
+    "id": "postprocessor_otel_trace",
+    "name": "Post-Processor - OpenTelemetry Task Trace",
+    "platform": [
+        "all"
+    ],
+    "priorities": {
+        "on_postprocessor_task_results": 0
+    },
+    "tags": "postprocessor,opentelemetry,otel,signoz,observability,tracing",
+    "version": "0.1.0"
+}

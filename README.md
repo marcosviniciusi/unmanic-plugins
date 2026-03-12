@@ -32,6 +32,12 @@ Custom plugins for [Unmanic](https://docs.unmanic.app/docs/).
 | `ignore_video_over_res` | Ignore - Video Over Resolution Limit | Skip files exceeding configured resolution |
 | `ignore_video_under_res` | Ignore - Video Under Resolution Limit | Skip files below configured resolution |
 
+### Post-Processor Plugins
+
+| Plugin ID | Name | Description |
+|---|---|---|
+| `postprocessor_otel_trace` | Post-Processor - OpenTelemetry Task Trace | Send task telemetry (traces/spans) to SigNoz, Jaeger, Grafana Tempo via OTLP HTTP |
+
 ## Installation
 
 ### Repo URL:
