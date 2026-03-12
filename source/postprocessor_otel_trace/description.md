@@ -1,27 +1,40 @@
-Send completed task telemetry to an **OpenTelemetry-compatible backend** (SigNoz, Jaeger, Grafana Tempo, etc.) via **OTLP HTTP**.
+Send completed task **logs** to an **OpenTelemetry-compatible backend** (SigNoz, Jaeger, Grafana Tempo, etc.) via **OTLP HTTP**.
 
-Each completed Unmanic task generates a trace span containing:
+Each completed Unmanic task generates a structured JSON log containing:
 
-- **Task duration** (start → finish timestamps)
-- **Source file** path, basename, and size
-- **Destination files** paths, count, and total size
-- **Processing status** (success / failure)
-- **Source metadata** (all available key-value pairs)
+- **`unmanic_processed`**: `success` or `failed`
+- **Task info**: id, library_id, duration, start/finish timestamps
+- **Source file**: path, basename, size (bytes + human readable)
+- **Destination files**: paths, count, total size
+- **Environment**: service_name, environment, hostname
 
 ### Configuration
 
 | Setting | Description | Default |
 |---|---|---|
-| OTLP HTTP Endpoint | Collector endpoint | `http://localhost:4318` |
-| Service Name | OTEL `service.name` attribute | `unmanic` |
-| OTLP Headers | Comma-separated `key=value` pairs for auth | *(empty)* |
-| Allow insecure | Disable TLS verification | `true` |
-| Send on failure | Also trace failed tasks | `true` |
+| OTEL Collector Host | Hostname or IP | `localhost` |
+| OTEL Collector Port | Port number | `4318` |
+| Protocol | HTTP or HTTPS | `http` |
+| OTLP Log Endpoint Path | Path for log endpoint | `/v1/logs` |
+| OTLP Headers | Auth headers (key=value) | *(empty)* |
+| Service Name | service.name attribute | `unmanic` |
+| Environment | deployment.environment | `production` |
+| Send on failure | Log failed tasks too | `true` |
 
-### SigNoz Self-Hosted Example
+### SigNoz Self-Hosted
 
-Set the endpoint to `http://<signoz-host>:4318` and leave headers empty.
+- Host: `signoz-otel-collector` (or your host IP)
+- Port: `4318`
+- Protocol: `HTTP`
+- Headers: *(empty)*
 
-### SigNoz Cloud Example
+### SigNoz Cloud
 
-Set the endpoint to `https://ingest.us.signoz.cloud:443` and headers to `signoz-ingestion-key=<your-key>`.
+- Host: `ingest.us.signoz.cloud`
+- Port: `443`
+- Protocol: `HTTPS`
+- Headers: `signoz-ingestion-key=<your-key>`
+
+### Limitations
+
+The Unmanic post-processor hook provides only the **overall task status** (success/failed). Individual per-plugin statuses (which plugins ran, which were skipped) are **not available** from the Unmanic API at the post-processor stage.

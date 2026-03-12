@@ -2,21 +2,29 @@
 # -*- coding: utf-8 -*-
 
 """
-Unmanic Post-Processor Plugin: OpenTelemetry Task Trace
+Unmanic Post-Processor Plugin: OpenTelemetry Task Log
 
-Sends completed task telemetry (traces/spans) to an OpenTelemetry-compatible
-backend (SigNoz, Jaeger, Grafana Tempo, etc.) via OTLP HTTP.
+Sends a structured log record for each completed Unmanic task to an
+OpenTelemetry-compatible backend (SigNoz, Jaeger, Grafana Tempo, etc.)
+via OTLP HTTP.
 
-Each completed task generates a span with:
-  - Task duration (start_time → finish_time)
-  - Source file path and metadata
-  - Destination file paths
-  - Processing success/failure status
+The log contains:
+  - Task result (unmanic_processed: success / failed)
+  - Source and destination file info
+  - Task duration
+  - Environment metadata (host, service name)
+
+NOTE: The Unmanic post-processor hook (on_postprocessor_task_results) provides
+overall task success/failure status. Individual per-plugin statuses
+(success/skipped/failed) are NOT available from this hook — the Unmanic API
+does not expose them at the post-processor stage.
 """
 
+import json
 import logging
 import os
 import time
+import datetime
 
 from unmanic.libs.unplugins.settings import PluginSettings
 
@@ -25,40 +33,77 @@ logger = logging.getLogger("Unmanic.Plugin.postprocessor_otel_trace")
 
 class Settings(PluginSettings):
     settings = {
-        'otel_endpoint':     'http://localhost:4318',
-        'otel_service_name': 'unmanic',
+        'otel_host':         'localhost',
+        'otel_port':         '4318',
+        'otel_protocol':     'http',
+        'otel_path':         '/v1/logs',
         'otel_headers':      '',
-        'otel_insecure':     True,
+        'otel_service_name': 'unmanic',
+        'otel_environment':  'production',
         'send_on_failure':   True,
     }
 
     form_settings = {
-        'otel_endpoint': {
-            'label':       'OTLP HTTP Endpoint',
-            'description': 'The OTLP HTTP collector endpoint (e.g. http://signoz:4318 or https://ingest.us.signoz.cloud:443).',
+        'otel_host': {
+            'label':       'OTEL Collector Host',
+            'description': 'Hostname or IP of the OTEL collector (e.g. signoz-otel-collector, 192.168.1.100, ingest.us.signoz.cloud).',
             'input_type':  'text',
         },
-        'otel_service_name': {
-            'label':       'Service Name',
-            'description': 'The service.name resource attribute sent with every span.',
+        'otel_port': {
+            'label':       'OTEL Collector Port',
+            'description': 'Port of the OTEL HTTP receiver (default: 4318).',
+            'input_type':  'text',
+        },
+        'otel_protocol': {
+            'label':       'Protocol',
+            'description': 'Use https for SigNoz Cloud or TLS-enabled collectors.',
+            'input_type':  'select',
+            'select_options': [
+                {'value': 'http',  'label': 'HTTP'},
+                {'value': 'https', 'label': 'HTTPS'},
+            ],
+        },
+        'otel_path': {
+            'label':       'OTLP Log Endpoint Path',
+            'description': 'Path for the OTLP log endpoint (default: /v1/logs).',
             'input_type':  'text',
         },
         'otel_headers': {
             'label':       'OTLP Headers (optional)',
-            'description': 'Comma-separated key=value pairs (e.g. signoz-ingestion-key=abc123). Leave empty for self-hosted.',
+            'description': 'Comma-separated key=value pairs for authentication (e.g. signoz-ingestion-key=abc123). Leave empty for self-hosted.',
             'input_type':  'text',
         },
-        'otel_insecure': {
-            'label':       'Allow insecure (HTTP) connections',
-            'description': 'Disable TLS verification for self-hosted backends on HTTP.',
-            'input_type':  'checkbox',
+        'otel_service_name': {
+            'label':       'Service Name',
+            'description': 'The service.name sent with every log record (identifies this Unmanic instance).',
+            'input_type':  'text',
+        },
+        'otel_environment': {
+            'label':       'Environment',
+            'description': 'Deployment environment label (e.g. production, staging, homelab).',
+            'input_type':  'text',
         },
         'send_on_failure': {
-            'label':       'Send trace on failed tasks too',
-            'description': 'If unchecked, only successful tasks generate a trace span.',
+            'label':       'Send log on failed tasks too',
+            'description': 'If unchecked, only successful tasks generate a log entry.',
             'input_type':  'checkbox',
         },
     }
+
+
+def _build_endpoint(settings):
+    """Build the full OTLP endpoint URL from host/port/protocol settings."""
+    protocol = settings.get_setting('otel_protocol')
+    host = settings.get_setting('otel_host').strip().rstrip('/')
+    port = settings.get_setting('otel_port').strip()
+    path = settings.get_setting('otel_path').strip()
+
+    if not path.startswith('/'):
+        path = '/' + path
+
+    if port:
+        return "{}://{}:{}{}".format(protocol, host, port, path)
+    return "{}://{}{}".format(protocol, host, path)
 
 
 def _parse_headers(header_string):
@@ -82,15 +127,116 @@ def _get_file_size(path):
         return 0
 
 
-def _send_trace(settings, data):
-    """Build and export an OTEL span for the completed task."""
+def _format_bytes(size_bytes):
+    """Format bytes to human-readable string."""
+    if size_bytes == 0:
+        return "0 B"
+    units = ['B', 'KB', 'MB', 'GB', 'TB']
+    i = 0
+    size = float(size_bytes)
+    while size >= 1024.0 and i < len(units) - 1:
+        size /= 1024.0
+        i += 1
+    return "{:.2f} {}".format(size, units[i])
+
+
+def _format_duration(seconds):
+    """Format seconds to human-readable duration."""
+    if seconds <= 0:
+        return "0s"
+    hours = int(seconds // 3600)
+    minutes = int((seconds % 3600) // 60)
+    secs = int(seconds % 60)
+    parts = []
+    if hours:
+        parts.append("{}h".format(hours))
+    if minutes:
+        parts.append("{}m".format(minutes))
+    parts.append("{}s".format(secs))
+    return " ".join(parts)
+
+
+def _build_task_log(settings, data):
+    """
+    Build a structured log record dict from the task data.
+
+    This is the JSON body that will be sent to the OTEL collector.
+    """
+    task_success = data.get('task_processing_success', False)
+    file_move_success = data.get('file_move_processes_success', False)
+    destination_files = data.get('destination_files', [])
+    source_data = data.get('source_data', {})
+    start_time = data.get('start_time', 0)
+    finish_time = data.get('finish_time', 0)
+    task_id = data.get('task_id', 'unknown')
+    library_id = data.get('library_id', 0)
+
+    source_path = source_data.get('abspath', source_data.get('basename', 'unknown'))
+    source_basename = os.path.basename(source_path) if source_path else 'unknown'
+    source_size = _get_file_size(source_path)
+
+    duration_s = (finish_time - start_time) if (start_time and finish_time) else 0
+
+    dest_sizes = [_get_file_size(f) for f in destination_files]
+    total_dest_size = sum(dest_sizes)
+
+    unmanic_status = "success" if task_success else "failed"
+
+    service_name = settings.get_setting('otel_service_name')
+    environment = settings.get_setting('otel_environment')
+    hostname = os.environ.get('HOSTNAME', os.environ.get('COMPUTERNAME', 'unknown'))
+
+    log_record = {
+        "unmanic_processed": unmanic_status,
+
+        "task": {
+            "id":                    task_id,
+            "library_id":            library_id,
+            "processing_success":    task_success,
+            "file_move_success":     file_move_success,
+            "duration_seconds":      round(duration_s, 2),
+            "duration_human":        _format_duration(duration_s),
+            "start_time":            datetime.datetime.fromtimestamp(start_time).isoformat() if start_time else None,
+            "finish_time":           datetime.datetime.fromtimestamp(finish_time).isoformat() if finish_time else None,
+        },
+
+        "source": {
+            "path":          str(source_path),
+            "basename":      source_basename,
+            "size_bytes":    source_size,
+            "size_human":    _format_bytes(source_size),
+        },
+
+        "destination": {
+            "files":            destination_files,
+            "count":            len(destination_files),
+            "total_size_bytes": total_dest_size,
+            "total_size_human": _format_bytes(total_dest_size),
+        },
+
+        "environment": {
+            "service_name": service_name,
+            "environment":  environment,
+            "hostname":     hostname,
+        },
+    }
+
+    for key, value in source_data.items():
+        if key not in ('abspath', 'basename') and isinstance(value, (str, int, float, bool)):
+            log_record["source"][key] = value
+
+    return log_record
+
+
+def _send_log(settings, data):
+    """Send the task log to the OTEL collector via OTLP HTTP."""
     try:
         from opentelemetry import trace
-        from opentelemetry.sdk.trace import TracerProvider
-        from opentelemetry.sdk.trace.export import BatchSpanProcessor
         from opentelemetry.sdk.resources import Resource
-        from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
-        from opentelemetry.trace import StatusCode
+        from opentelemetry.sdk._logs import LoggerProvider, LoggingHandler
+        from opentelemetry.sdk._logs.export import BatchLogRecordProcessor
+        from opentelemetry.exporter.otlp.proto.http._log_exporter import OTLPLogExporter
+        from opentelemetry._logs import set_logger_provider, SeverityNumber
     except ImportError as e:
         logger.error(
             "OpenTelemetry packages not installed. "
@@ -98,86 +244,64 @@ def _send_trace(settings, data):
         )
         return
 
-    endpoint = settings.get_setting('otel_endpoint')
-    service_name = settings.get_setting('otel_service_name')
+    endpoint = _build_endpoint(settings)
     header_string = settings.get_setting('otel_headers')
-
+    service_name = settings.get_setting('otel_service_name')
+    environment = settings.get_setting('otel_environment')
     headers = _parse_headers(header_string)
 
-    traces_endpoint = endpoint.rstrip('/') + '/v1/traces'
-
     resource = Resource.create({
-        'service.name': service_name,
-        'service.version': '0.1.0',
-        'deployment.environment': 'production',
+        'service.name':             service_name,
+        'service.version':          '0.2.0',
+        'deployment.environment':   environment,
+        'host.name':                os.environ.get('HOSTNAME', os.environ.get('COMPUTERNAME', 'unknown')),
     })
 
-    exporter = OTLPSpanExporter(
-        endpoint=traces_endpoint,
+    exporter = OTLPLogExporter(
+        endpoint=endpoint,
         headers=headers,
     )
 
-    provider = TracerProvider(resource=resource)
-    provider.add_span_processor(BatchSpanProcessor(exporter))
+    log_provider = LoggerProvider(resource=resource)
+    log_provider.add_log_record_processor(BatchLogRecordProcessor(exporter))
+    set_logger_provider(log_provider)
 
-    tracer = provider.get_tracer('unmanic.postprocessor_otel_trace', '0.1.0')
+    otel_logger = log_provider.get_logger('unmanic.postprocessor_otel_trace', '0.2.0')
 
+    task_log = _build_task_log(settings, data)
     task_success = data.get('task_processing_success', False)
-    file_move_success = data.get('file_move_processes_success', False)
-    destination_files = data.get('destination_files', [])
-    source_data = data.get('source_data', {})
-    start_time = data.get('start_time', 0)
-    finish_time = data.get('finish_time', 0)
+    source_basename = task_log['source']['basename']
 
-    source_path = source_data.get('abspath', source_data.get('basename', 'unknown'))
-    source_basename = os.path.basename(source_path) if source_path else 'unknown'
+    severity = SeverityNumber.INFO if task_success else SeverityNumber.ERROR
+    severity_text = "INFO" if task_success else "ERROR"
 
-    span_name = "unmanic.task.{}".format('success' if task_success else 'failure')
+    log_body = json.dumps(task_log, ensure_ascii=False, default=str)
 
-    start_ns = int(start_time * 1e9) if start_time else None
-    end_ns = int(finish_time * 1e9) if finish_time else None
+    otel_logger.emit(
+        otel_logger._logger.create_log_record(
+            body=log_body,
+            severity_number=severity,
+            severity_text=severity_text,
+            attributes={
+                'unmanic.processed':        task_log['unmanic_processed'],
+                'unmanic.task.id':          str(task_log['task']['id']),
+                'unmanic.source.basename':  source_basename,
+                'unmanic.source.path':      task_log['source']['path'],
+                'unmanic.task.duration_s':  task_log['task']['duration_seconds'],
+                'unmanic.destination.count': task_log['destination']['count'],
+                'log.type':                 'unmanic_task_result',
+            },
+        )
+    )
 
-    with tracer.start_span(
-        name=span_name,
-        start_time=start_ns,
-        kind=trace.SpanKind.INTERNAL,
-    ) as span:
-        span.set_attribute('unmanic.task.success', task_success)
-        span.set_attribute('unmanic.task.file_move_success', file_move_success)
-        span.set_attribute('unmanic.source.path', str(source_path))
-        span.set_attribute('unmanic.source.basename', source_basename)
-        span.set_attribute('unmanic.source.size_bytes', _get_file_size(source_path))
-
-        if destination_files:
-            span.set_attribute('unmanic.destination.files', destination_files)
-            span.set_attribute('unmanic.destination.count', len(destination_files))
-            total_dest_size = sum(_get_file_size(f) for f in destination_files)
-            span.set_attribute('unmanic.destination.total_size_bytes', total_dest_size)
-
-        if start_time and finish_time:
-            duration_s = finish_time - start_time
-            span.set_attribute('unmanic.task.duration_seconds', round(duration_s, 2))
-
-        for key, value in source_data.items():
-            if isinstance(value, (str, int, float, bool)):
-                span.set_attribute('unmanic.source.{}'.format(key), value)
-
-        if task_success:
-            span.set_status(trace.Status(StatusCode.OK))
-        else:
-            span.set_status(trace.Status(StatusCode.ERROR, 'Task processing failed'))
-
-        if end_ns:
-            span.end(end_time=end_ns)
-
-    provider.force_flush()
-    provider.shutdown()
+    log_provider.force_flush()
+    log_provider.shutdown()
 
     logger.info(
-        "OTEL trace sent for '%s' (success=%s, duration=%.1fs) to %s",
+        "OTEL log sent for '%s' (unmanic_processed=%s, duration=%s) to %s",
         source_basename,
-        task_success,
-        (finish_time - start_time) if (start_time and finish_time) else 0,
+        task_log['unmanic_processed'],
+        task_log['task']['duration_human'],
         endpoint,
     )
 
@@ -203,10 +327,10 @@ def on_postprocessor_task_results(data):
     send_on_failure = settings.get_setting('send_on_failure')
 
     if not task_success and not send_on_failure:
-        logger.debug("Task failed and send_on_failure is disabled. Skipping trace.")
+        logger.debug("Task failed and send_on_failure is disabled. Skipping log.")
         return
 
     try:
-        _send_trace(settings, data)
+        _send_log(settings, data)
     except Exception as e:
-        logger.error("Failed to send OTEL trace: %s", e)
+        logger.error("Failed to send OTEL log: %s", e)
