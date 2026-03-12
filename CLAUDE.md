@@ -20,10 +20,10 @@ Repository ID: `repository.vinicima` (defined in `config.json`).
 
 | Dir / Plugin ID | Name | Version | Original Author |
 |---|---|---|---|
-| `ignore_completed_tasks` | Ignore - Completed Tasks | 0.0.2 | Josh.5 |
+| `ignore_task_history` | Ignore - Task History | 0.0.3 | Josh.5 |
 | `ignore_metadata_unmanic` | Ignore - Metadata Processed | 0.0.2 | marcosviniciusi |
-| `ignore_video_file_over_resolution` | Ignore - Video Over Resolution Limit | 0.0.3 | Josh.5 |
-| `ignore_video_file_under_resolution` | Ignore - Video Under Resolution Limit | 0.0.3 | Josh.5 |
+| `ignore_video_over_res` | Ignore - Video Over Resolution Limit | 0.0.4 | Josh.5 |
+| `ignore_video_under_res` | Ignore - Video Under Resolution Limit | 0.0.4 | Josh.5 |
 
 ## Naming Convention
 
@@ -32,7 +32,7 @@ Plugin IDs follow this pattern to avoid conflicts with the official Unmanic repo
 - **Video**: `video_transcoder` (kept original, unique due to custom repo)
 - **Audio**: `audio_transcoder`, `audio_transcode_create_stereo` (category + action)
 - **Subtitles**: `subtitles_transcode` (category + action)
-- **Ignore/Filters**: `ignore_` prefix (e.g., `ignore_completed_tasks`, `ignore_metadata_unmanic`)
+- **Ignore/Filters**: `ignore_` prefix (e.g., `ignore_task_history`, `ignore_metadata_unmanic`, `ignore_video_over_res`)
 
 **Rule**: `{category}_{action}` or `ignore_{what_is_filtered}`
 
@@ -44,10 +44,10 @@ Plugin IDs follow this pattern to avoid conflicts with the official Unmanic repo
 | `create_stereo_audio_clone` | `create_stereo_audio_clone` | `audio_transcode_create_stereo` |
 | `equalize_subtitles_ptbr` | `equalize_subtitles_ptbr` | `subtitles_transcode` |
 | `video_transcoder` | `video_transcoder` | `video_transcoder` (unchanged) |
-| `ignore_completed_tasks` | `ignore_completed_tasks` | `ignore_completed_tasks` (unchanged) |
+| `ignore_completed_tasks` | `ignore_completed_tasks` | `ignore_task_history` |
 | `ignore_metadata_unmanic` | `ignore_metadata_unmanic` | `ignore_metadata_unmanic` (unchanged) |
-| `ignore_video_file_over_resolution` | `ignore_video_file_over_resolution` | `ignore_video_file_over_resolution` (unchanged) |
-| `ignore_video_file_under_resolution` | `ignore_video_file_under_resolution` | `ignore_video_file_under_resolution` (unchanged) |
+| `ignore_video_file_over_resolution` | `ignore_video_file_over_resolution` | `ignore_video_over_res` |
+| `ignore_video_file_under_resolution` | `ignore_video_file_under_resolution` | `ignore_video_under_res` |
 
 ## Project Structure
 
@@ -82,10 +82,10 @@ unmanic-plugins/
     │   ├── plugin.py
     │   ├── lib/ffmpeg/
     │   └── ...
-    ├── ignore_completed_tasks/         # Filter: skip completed tasks
+    ├── ignore_task_history/             # Filter: skip completed tasks
     ├── ignore_metadata_unmanic/        # Filter: skip processed metadata
-    ├── ignore_video_file_over_resolution/  # Filter: skip high-res
-    └── ignore_video_file_under_resolution/ # Filter: skip low-res
+    ├── ignore_video_over_res/          # Filter: skip high-res
+    └── ignore_video_under_res/         # Filter: skip low-res
 ```
 
 ## Key Files per Plugin
@@ -109,7 +109,10 @@ unmanic-plugins/
 - [x] Renamed `audio_to_EAC3` (id: `dts_to_dd`) -> `audio_transcoder`
 - [x] Renamed `create_stereo_audio_clone` -> `audio_transcode_create_stereo`
 - [x] Renamed `equalize_subtitles_ptbr` -> `subtitles_transcode`
-- [x] Kept `video_transcoder` and all `ignore_*` plugins with original IDs
+- [x] Kept `video_transcoder` with original ID
+- [x] Renamed `ignore_completed_tasks` -> `ignore_task_history`
+- [x] Renamed `ignore_video_file_over_resolution` -> `ignore_video_over_res`
+- [x] Renamed `ignore_video_file_under_resolution` -> `ignore_video_under_res`
 - [x] Updated all `info.json` files with new IDs, names, versions, and author attribution
 - [x] Updated all `changelog.md` files preserving original history
 - [x] Updated main `README.md` with organized plugin table

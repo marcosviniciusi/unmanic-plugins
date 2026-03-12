@@ -27,10 +27,10 @@ Custom plugins for [Unmanic](https://docs.unmanic.app/docs/).
 
 | Plugin ID | Name | Description |
 |---|---|---|
-| `ignore_completed_tasks` | Ignore - Completed Tasks | Skip files already in completed tasks list |
+| `ignore_task_history` | Ignore - Task History | Skip files already in completed tasks list |
 | `ignore_metadata_unmanic` | Ignore - Metadata Processed | Skip files with UNMANIC_STATUS=processed metadata |
-| `ignore_video_file_over_resolution` | Ignore - Video Over Resolution Limit | Skip files exceeding configured resolution |
-| `ignore_video_file_under_resolution` | Ignore - Video Under Resolution Limit | Skip files below configured resolution |
+| `ignore_video_over_res` | Ignore - Video Over Resolution Limit | Skip files exceeding configured resolution |
+| `ignore_video_under_res` | Ignore - Video Under Resolution Limit | Skip files below configured resolution |
 
 ## Installation
 
