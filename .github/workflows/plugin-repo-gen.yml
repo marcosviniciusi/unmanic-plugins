@@ -1,0 +1,188 @@
+name: Unmanic Plugin Test and Generate Repo
+
+on:
+  push:
+    branches:
+      - '**'
+      - '!template'
+  pull_request:
+    branches:
+      - 'master'
+      - 'main'
+
+jobs:
+
+  plugins-contain-required-files:
+    runs-on: ubuntu-latest
+    name: Plugins contain all required files
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Check all plugins exist in source directory
+      if: success() || failure()
+      run: |
+        success=0
+        for root_dir in ./*; do
+            if [ -d "${root_dir:?}" ]; then
+                [ "$(basename ${root_dir:?})" == "docs" ] && continue
+                [ "$(basename ${root_dir:?})" == ".github" ] && continue
+                if [ "$(basename ${root_dir:?})" != "source" ]; then
+                    echo "FAIL - Found an unexpected directory in '${root_dir:?}'. All plugins should be added to './source/'."
+                    success=1
+                fi
+            fi
+        done
+        if [ ${success} -gt 0 ]; then
+            exit 1
+        else
+            echo "PASS - Found a correct directory structure in the project root."
+        fi
+
+    - name: Check .gitignore in all plugin folders
+      if: success() || failure()
+      run: |
+        success=0
+        for plugin_dir in source/*; do
+            if [ -d "${plugin_dir}" ]; then
+                if [ -e "${plugin_dir}/.gitignore" ]; then
+                    echo "PASS - Found .gitignore in plugin '${plugin_dir}'"
+                else
+                    echo "FAIL - Missing .gitignore in plugin '${plugin_dir}'"
+                    success=1
+                fi
+            fi
+        done
+        if [ ${success} -gt 0 ]; then
+            exit 1
+        fi
+
+    - name: Check info.json in all plugin folders
+      if: success() || failure()
+      run: |
+        success=0
+        for plugin_dir in source/*; do
+            if [ -d "${plugin_dir}" ]; then
+                if [ -e "${plugin_dir}/info.json" ]; then
+                    echo "PASS - Found info.json in plugin '${plugin_dir}'"
+                else
+                    echo "FAIL - Missing info.json in plugin '${plugin_dir}'"
+                    success=1
+                fi
+            fi
+        done
+        if [ ${success} -gt 0 ]; then
+            exit 1
+        fi
+
+    - name: Check LICENSE file in all plugin folders
+      if: success() || failure()
+      run: |
+        success=0
+        for plugin_dir in source/*; do
+            if [ -d "${plugin_dir}" ]; then
+                if [ -e "${plugin_dir}/LICENSE" ]; then
+                    echo "PASS - Found LICENSE in plugin '${plugin_dir}'"
+                else
+                    echo "FAIL - Missing LICENSE in plugin '${plugin_dir}'"
+                    success=1
+                fi
+            fi
+        done
+        if [ ${success} -gt 0 ]; then
+            exit 1
+        fi
+
+    - name: Check plugin.py in all plugin folders
+      if: success() || failure()
+      run: |
+        success=0
+        for plugin_dir in source/*; do
+            if [ -d "${plugin_dir}" ]; then
+                if [ -e "${plugin_dir}/plugin.py" ]; then
+                    echo "PASS - Found plugin.py in plugin '${plugin_dir}'"
+                else
+                    echo "FAIL - Missing plugin.py in plugin '${plugin_dir}'"
+                    success=1
+                fi
+            fi
+        done
+        if [ ${success} -gt 0 ]; then
+            exit 1
+        fi
+
+    - name: Check site-packages not in plugin folders
+      if: success() || failure()
+      run: |
+        success=0
+        for plugin_dir in source/*; do
+            if [ -d "${plugin_dir}" ]; then
+                if [ -e "${plugin_dir}/site-packages" ]; then
+                    echo "FAIL - Directory 'site-packages' found in plugin '${plugin_dir}'"
+                    success=1
+                else
+                    echo "PASS - No 'site-packages' directory found in plugin '${plugin_dir}'"
+                fi
+            fi
+        done
+        if [ ${success} -gt 0 ]; then
+            exit 1
+        fi
+
+    - name: Check settings.json not in plugin folders
+      if: success() || failure()
+      run: |
+        success=0
+        for plugin_dir in source/*; do
+            if [ -d "${plugin_dir}" ]; then
+                if [ -e "${plugin_dir}/settings.json" ]; then
+                    echo "FAIL - File 'settings.json' found in plugin '${plugin_dir}'"
+                    success=1
+                else
+                    echo "PASS - No 'settings.json' file found in plugin '${plugin_dir}'"
+                fi
+            fi
+        done
+        if [ ${success} -gt 0 ]; then
+            exit 1
+        fi
+
+    - name: Set success file on completion of tests
+      if: success()
+      run: echo 'true' > success_file.txt
+    - name: Upload success file
+      if: success()
+      uses: actions/upload-artifact@v4
+      with:
+        name: success_file
+        path: success_file.txt
+
+  deploy-plugin-repo:
+    needs: [plugins-contain-required-files]
+    runs-on: ubuntu-latest
+    name: Build the plugin repository
+    steps:
+    - name: Download success file from previous job
+      uses: actions/download-artifact@v4
+      with:
+        path: ./artifacts/
+    - name: Read success file
+      id: previous_jobs_success
+      run: |
+        IS_SUCCESS=$(cat ./artifacts/success_file/success_file.txt)
+        echo "IS_SUCCESS=${IS_SUCCESS}" >> $GITHUB_OUTPUT
+        rm -rfv ./artifacts
+
+    - name: Checkout
+      if: steps.previous_jobs_success.outputs.IS_SUCCESS == 'true'
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
+
+    - name: Generate and Deploy Unmanic Plugin Repository
+      if: steps.previous_jobs_success.outputs.IS_SUCCESS == 'true'
+      uses: Josh5/action-generate-unmanic-plugin-repo@master
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
