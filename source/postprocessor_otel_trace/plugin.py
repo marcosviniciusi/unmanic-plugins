@@ -10,7 +10,7 @@ via OTLP HTTP.
 
 The log contains:
   - Task result (unmanic_processed: success / failed)
-  - Source and destination file info
+  - Full file path
   - Task duration
   - Environment metadata (host, service name)
 
@@ -23,8 +23,6 @@ does not expose them at the post-processor stage.
 import json
 import logging
 import os
-import time
-import datetime
 
 from unmanic.libs.unplugins.settings import PluginSettings
 
@@ -40,6 +38,7 @@ class Settings(PluginSettings):
         'otel_headers':      '',
         'otel_service_name': 'unmanic',
         'otel_environment':  'production',
+        'otel_hostname':     '',
         'send_on_failure':   True,
     }
 
@@ -83,6 +82,11 @@ class Settings(PluginSettings):
             'description': 'Deployment environment label (e.g. production, staging, homelab).',
             'input_type':  'text',
         },
+        'otel_hostname': {
+            'label':       'Hostname',
+            'description': 'Override the hostname sent with logs. Leave empty to auto-detect from system.',
+            'input_type':  'text',
+        },
         'send_on_failure': {
             'label':       'Send log on failed tasks too',
             'description': 'If unchecked, only successful tasks generate a log entry.',
@@ -119,27 +123,6 @@ def _parse_headers(header_string):
     return headers
 
 
-def _get_file_size(path):
-    """Get file size in bytes, return 0 if not accessible."""
-    try:
-        return os.path.getsize(path)
-    except (OSError, TypeError):
-        return 0
-
-
-def _format_bytes(size_bytes):
-    """Format bytes to human-readable string."""
-    if size_bytes == 0:
-        return "0 B"
-    units = ['B', 'KB', 'MB', 'GB', 'TB']
-    i = 0
-    size = float(size_bytes)
-    while size >= 1024.0 and i < len(units) - 1:
-        size /= 1024.0
-        i += 1
-    return "{:.2f} {}".format(size, units[i])
-
-
 def _format_duration(seconds):
     """Format seconds to human-readable duration."""
     if seconds <= 0:
@@ -163,67 +146,29 @@ def _build_task_log(settings, data):
     This is the JSON body that will be sent to the OTEL collector.
     """
     task_success = data.get('task_processing_success', False)
-    file_move_success = data.get('file_move_processes_success', False)
-    destination_files = data.get('destination_files', [])
     source_data = data.get('source_data', {})
     start_time = data.get('start_time', 0)
     finish_time = data.get('finish_time', 0)
-    task_id = data.get('task_id', 'unknown')
-    library_id = data.get('library_id', 0)
 
     source_path = source_data.get('abspath', source_data.get('basename', 'unknown'))
-    source_basename = os.path.basename(source_path) if source_path else 'unknown'
-    source_size = _get_file_size(source_path)
-
     duration_s = (finish_time - start_time) if (start_time and finish_time) else 0
-
-    dest_sizes = [_get_file_size(f) for f in destination_files]
-    total_dest_size = sum(dest_sizes)
-
     unmanic_status = "success" if task_success else "failed"
 
     service_name = settings.get_setting('otel_service_name')
     environment = settings.get_setting('otel_environment')
-    hostname = os.environ.get('HOSTNAME', os.environ.get('COMPUTERNAME', 'unknown'))
+    configured_hostname = settings.get_setting('otel_hostname')
+    hostname = configured_hostname.strip() if configured_hostname and configured_hostname.strip() else \
+        os.environ.get('HOSTNAME', os.environ.get('COMPUTERNAME', 'unknown'))
 
     log_record = {
-        "unmanic_processed": unmanic_status,
-
-        "task": {
-            "id":                    task_id,
-            "library_id":            library_id,
-            "processing_success":    task_success,
-            "file_move_success":     file_move_success,
-            "duration_seconds":      round(duration_s, 2),
-            "duration_human":        _format_duration(duration_s),
-            "start_time":            datetime.datetime.fromtimestamp(start_time).isoformat() if start_time else None,
-            "finish_time":           datetime.datetime.fromtimestamp(finish_time).isoformat() if finish_time else None,
-        },
-
-        "source": {
-            "path":          str(source_path),
-            "basename":      source_basename,
-            "size_bytes":    source_size,
-            "size_human":    _format_bytes(source_size),
-        },
-
-        "destination": {
-            "files":            destination_files,
-            "count":            len(destination_files),
-            "total_size_bytes": total_dest_size,
-            "total_size_human": _format_bytes(total_dest_size),
-        },
-
-        "environment": {
-            "service_name": service_name,
-            "environment":  environment,
-            "hostname":     hostname,
-        },
+        "unmanic_processed":  unmanic_status,
+        "file":               str(source_path),
+        "duration":           _format_duration(duration_s),
+        "duration_seconds":   round(duration_s, 2),
+        "hostname":           hostname,
+        "service":            service_name,
+        "environment":        environment,
     }
-
-    for key, value in source_data.items():
-        if key not in ('abspath', 'basename') and isinstance(value, (str, int, float, bool)):
-            log_record["source"][key] = value
 
     return log_record
 
@@ -231,9 +176,8 @@ def _build_task_log(settings, data):
 def _send_log(settings, data):
     """Send the task log to the OTEL collector via OTLP HTTP."""
     try:
-        from opentelemetry import trace
         from opentelemetry.sdk.resources import Resource
-        from opentelemetry.sdk._logs import LoggerProvider, LoggingHandler
+        from opentelemetry.sdk._logs import LoggerProvider
         from opentelemetry.sdk._logs.export import BatchLogRecordProcessor
         from opentelemetry.exporter.otlp.proto.http._log_exporter import OTLPLogExporter
         from opentelemetry._logs import set_logger_provider, SeverityNumber
@@ -250,11 +194,15 @@ def _send_log(settings, data):
     environment = settings.get_setting('otel_environment')
     headers = _parse_headers(header_string)
 
+    configured_hostname = settings.get_setting('otel_hostname')
+    hostname = configured_hostname.strip() if configured_hostname and configured_hostname.strip() else \
+        os.environ.get('HOSTNAME', os.environ.get('COMPUTERNAME', 'unknown'))
+
     resource = Resource.create({
         'service.name':             service_name,
-        'service.version':          '0.2.0',
+        'service.version':          '0.3.0',
         'deployment.environment':   environment,
-        'host.name':                os.environ.get('HOSTNAME', os.environ.get('COMPUTERNAME', 'unknown')),
+        'host.name':                hostname,
     })
 
     exporter = OTLPLogExporter(
@@ -266,11 +214,10 @@ def _send_log(settings, data):
     log_provider.add_log_record_processor(BatchLogRecordProcessor(exporter))
     set_logger_provider(log_provider)
 
-    otel_logger = log_provider.get_logger('unmanic.postprocessor_otel_trace', '0.2.0')
+    otel_logger = log_provider.get_logger('unmanic.postprocessor_otel_trace', '0.3.0')
 
     task_log = _build_task_log(settings, data)
     task_success = data.get('task_processing_success', False)
-    source_basename = task_log['source']['basename']
 
     severity = SeverityNumber.INFO if task_success else SeverityNumber.ERROR
     severity_text = "INFO" if task_success else "ERROR"
@@ -284,11 +231,8 @@ def _send_log(settings, data):
             severity_text=severity_text,
             attributes={
                 'unmanic.processed':        task_log['unmanic_processed'],
-                'unmanic.task.id':          str(task_log['task']['id']),
-                'unmanic.source.basename':  source_basename,
-                'unmanic.source.path':      task_log['source']['path'],
-                'unmanic.task.duration_s':  task_log['task']['duration_seconds'],
-                'unmanic.destination.count': task_log['destination']['count'],
+                'unmanic.file':             task_log['file'],
+                'unmanic.duration_s':       task_log['duration_seconds'],
                 'log.type':                 'unmanic_task_result',
             },
         )
@@ -299,9 +243,9 @@ def _send_log(settings, data):
 
     logger.info(
         "OTEL log sent for '%s' (unmanic_processed=%s, duration=%s) to %s",
-        source_basename,
+        task_log['file'],
         task_log['unmanic_processed'],
-        task_log['task']['duration_human'],
+        task_log['duration'],
         endpoint,
     )
 

@@ -3,10 +3,10 @@ Send completed task **logs** to an **OpenTelemetry-compatible backend** (SigNoz,
 Each completed Unmanic task generates a structured JSON log containing:
 
 - **`unmanic_processed`**: `success` or `failed`
-- **Task info**: id, library_id, duration, start/finish timestamps
-- **Source file**: path, basename, size (bytes + human readable)
-- **Destination files**: paths, count, total size
-- **Environment**: service_name, environment, hostname
+- **`file`**: full file path
+- **`duration`**: human-readable duration (e.g. `2m 7s`)
+- **`duration_seconds`**: duration in seconds
+- **Environment**: hostname, service_name, environment
 
 ### Configuration
 
