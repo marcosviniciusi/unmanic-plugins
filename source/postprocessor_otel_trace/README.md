@@ -19,9 +19,9 @@ on_postprocessor_task_results(data)
         ├── Build structured JSON log from task data
         │
         ├── Create OTEL LogRecord with:
-        │     - body: JSON string with task details
+        │     - body: JSON string with full task details
         │     - severity: INFO (success) or ERROR (failure)
-        │     - attributes: key fields for filtering
+        │     - attributes: key fields for filtering in SigNoz
         │     - resource: service.name, environment, hostname
         │
         └── Export via OTLP HTTP to {protocol}://{host}:{port}{path}
@@ -45,15 +45,37 @@ on_postprocessor_task_results(data)
 ```json
 {
     "unmanic_processed": "success",
+
     "task": {
-        "file": "/media/movies/Movie.mkv",
+        "id": 42,
         "basename": "Movie.mkv",
-        "duration": "2m 7s",
-        "duration_seconds": 127.45
+        "library_id": 1,
+        "processing_success": true,
+        "file_move_success": true,
+        "duration_seconds": 127.45,
+        "duration_human": "2m 7s",
+        "start_time": "2026-03-12T14:30:00",
+        "finish_time": "2026-03-12T14:32:07"
     },
-    "hostname": "media-server",
-    "service": "unmanic",
-    "environment": "production"
+
+    "source": {
+        "path": "/media/movies/Movie.mkv",
+        "size_bytes": 4294967296,
+        "size_human": "4.00 GB"
+    },
+
+    "destination": {
+        "files": ["/media/movies/Movie.mkv"],
+        "count": 1,
+        "total_size_bytes": 2147483648,
+        "total_size_human": "2.00 GB"
+    },
+
+    "environment": {
+        "service_name": "unmanic",
+        "environment": "production",
+        "hostname": "media-server"
+    }
 }
 ```
 
@@ -62,15 +84,37 @@ on_postprocessor_task_results(data)
 ```json
 {
     "unmanic_processed": "failed",
+
     "task": {
-        "file": "/media/movies/Corrupted.avi",
+        "id": 43,
         "basename": "Corrupted.avi",
-        "duration": "5s",
-        "duration_seconds": 5.32
+        "library_id": 1,
+        "processing_success": false,
+        "file_move_success": false,
+        "duration_seconds": 5.32,
+        "duration_human": "5s",
+        "start_time": "2026-03-12T14:35:00",
+        "finish_time": "2026-03-12T14:35:05"
     },
-    "hostname": "media-server",
-    "service": "unmanic",
-    "environment": "production"
+
+    "source": {
+        "path": "/media/movies/Corrupted.avi",
+        "size_bytes": 734003200,
+        "size_human": "700.00 MB"
+    },
+
+    "destination": {
+        "files": [],
+        "count": 0,
+        "total_size_bytes": 0,
+        "total_size_human": "0 B"
+    },
+
+    "environment": {
+        "service_name": "unmanic",
+        "environment": "production",
+        "hostname": "media-server"
+    }
 }
 ```
 
@@ -79,9 +123,11 @@ on_postprocessor_task_results(data)
 | Attribute | Example | Description |
 |---|---|---|
 | `unmanic.processed` | `success` / `failed` | Final task status |
-| `unmanic.task.file` | `/media/movies/Movie.mkv` | Full file path |
-| `unmanic.task.basename` | `Movie.mkv` | File name only |
+| `unmanic.task.id` | `42` | Task ID |
+| `unmanic.task.basename` | `Movie.mkv` | File name |
+| `unmanic.source.path` | `/media/movies/Movie.mkv` | Full source path |
 | `unmanic.task.duration_s` | `127.45` | Duration in seconds |
+| `unmanic.destination.count` | `1` | Number of output files |
 | `log.type` | `unmanic_task_result` | Fixed identifier |
 
 ## Configuration

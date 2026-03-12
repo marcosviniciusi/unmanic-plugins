@@ -1,8 +1,7 @@
 **<span style="color:#56adda">0.3.0</span>** *(marcosviniciusi)*
-- CHANGED: Simplified JSON log to essential fields only (status, file path, duration)
-- REMOVED: Task ID, library ID, source/destination size, file move status from log body
-- REMOVED: Unused helper functions (_get_file_size, _format_bytes)
-- UPDATED: OTEL LogRecord attributes simplified to match new structure
+- CHANGED: Moved basename from source to task object for better search/filtering
+- NEW: Configurable hostname setting (override auto-detected hostname)
+- UPDATED: Full structured JSON with task, source, destination, environment objects
 
 **<span style="color:#56adda">0.2.0</span>** *(marcosviniciusi)*
 - CHANGED: Send structured OTEL logs instead of traces (better for SigNoz log pipeline)
