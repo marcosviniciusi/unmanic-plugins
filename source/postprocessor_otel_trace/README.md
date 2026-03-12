@@ -45,9 +45,12 @@ on_postprocessor_task_results(data)
 ```json
 {
     "unmanic_processed": "success",
-    "file": "/media/movies/Movie.mkv",
-    "duration": "2m 7s",
-    "duration_seconds": 127.45,
+    "task": {
+        "file": "/media/movies/Movie.mkv",
+        "basename": "Movie.mkv",
+        "duration": "2m 7s",
+        "duration_seconds": 127.45
+    },
     "hostname": "media-server",
     "service": "unmanic",
     "environment": "production"
@@ -59,9 +62,12 @@ on_postprocessor_task_results(data)
 ```json
 {
     "unmanic_processed": "failed",
-    "file": "/media/movies/Corrupted.avi",
-    "duration": "5s",
-    "duration_seconds": 5.32,
+    "task": {
+        "file": "/media/movies/Corrupted.avi",
+        "basename": "Corrupted.avi",
+        "duration": "5s",
+        "duration_seconds": 5.32
+    },
     "hostname": "media-server",
     "service": "unmanic",
     "environment": "production"
@@ -73,8 +79,9 @@ on_postprocessor_task_results(data)
 | Attribute | Example | Description |
 |---|---|---|
 | `unmanic.processed` | `success` / `failed` | Final task status |
-| `unmanic.file` | `/media/movies/Movie.mkv` | Full file path |
-| `unmanic.duration_s` | `127.45` | Duration in seconds |
+| `unmanic.task.file` | `/media/movies/Movie.mkv` | Full file path |
+| `unmanic.task.basename` | `Movie.mkv` | File name only |
+| `unmanic.task.duration_s` | `127.45` | Duration in seconds |
 | `log.type` | `unmanic_task_result` | Fixed identifier |
 
 ## Configuration

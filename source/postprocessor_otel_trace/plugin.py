@@ -151,6 +151,7 @@ def _build_task_log(settings, data):
     finish_time = data.get('finish_time', 0)
 
     source_path = source_data.get('abspath', source_data.get('basename', 'unknown'))
+    source_basename = os.path.basename(source_path) if source_path else 'unknown'
     duration_s = (finish_time - start_time) if (start_time and finish_time) else 0
     unmanic_status = "success" if task_success else "failed"
 
@@ -162,9 +163,12 @@ def _build_task_log(settings, data):
 
     log_record = {
         "unmanic_processed":  unmanic_status,
-        "file":               str(source_path),
-        "duration":           _format_duration(duration_s),
-        "duration_seconds":   round(duration_s, 2),
+        "task": {
+            "file":             str(source_path),
+            "basename":         source_basename,
+            "duration":         _format_duration(duration_s),
+            "duration_seconds": round(duration_s, 2),
+        },
         "hostname":           hostname,
         "service":            service_name,
         "environment":        environment,
@@ -231,8 +235,9 @@ def _send_log(settings, data):
             severity_text=severity_text,
             attributes={
                 'unmanic.processed':        task_log['unmanic_processed'],
-                'unmanic.file':             task_log['file'],
-                'unmanic.duration_s':       task_log['duration_seconds'],
+                'unmanic.task.file':        task_log['task']['file'],
+                'unmanic.task.basename':    task_log['task']['basename'],
+                'unmanic.task.duration_s':  task_log['task']['duration_seconds'],
                 'log.type':                 'unmanic_task_result',
             },
         )
@@ -243,9 +248,9 @@ def _send_log(settings, data):
 
     logger.info(
         "OTEL log sent for '%s' (unmanic_processed=%s, duration=%s) to %s",
-        task_log['file'],
+        task_log['task']['basename'],
         task_log['unmanic_processed'],
-        task_log['duration'],
+        task_log['task']['duration'],
         endpoint,
     )
 
