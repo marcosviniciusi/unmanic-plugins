@@ -1,18 +1,18 @@
 {
-    "author": "Josh.5",
+    "author": "Josh.5 / marcosviniciusi",
     "compatibility": [
         2
     ],
     "description": "Ignore files if they exist in the completed tasks list (with status success OR failed)",
     "icon": "https://raw.githubusercontent.com/Unmanic/plugin.ignore_completed_tasks/master/icon.png",
     "id": "ignore_completed_tasks",
-    "name": "Ignore completed tasks",
+    "name": "Ignore - Completed Tasks",
     "platform": [
         "all"
     ],
     "priorities": {
         "on_library_management_file_test": 2
     },
-    "tags": "library file test",
-    "version": "0.0.1"
+    "tags": "library file test,ignore,filter",
+    "version": "0.0.2"
 }

@@ -1,20 +1,36 @@
-# Unmanic Plugins - Vinicima
+# Unmanic Plugins - marcosviniciusi
 
 Custom plugins for [Unmanic](https://docs.unmanic.app/docs/).
 
 ## Included Plugins
 
-### `video_transcoder`
+### Video Processing
 
-Transcode the video streams of a video file with hardware acceleration support (VideoToolbox, NVENC, VAAPI, QSV).
+| Plugin ID | Name | Description |
+|---|---|---|
+| `video_transcoder` | Video Transcoder - HW Accelerated with Metadata | Transcode video streams with HW acceleration (VideoToolbox, NVENC, VAAPI, QSV) |
 
-### `dts_flac_to_dd`
+### Audio Processing
 
-Convert DTS and FLAC audio to AC3 and/or EAC3 for maximum compatibility. Creates dual tracks (AC3 for old devices, EAC3 for modern TVs) and optionally removes originals to save space.
+| Plugin ID | Name | Description |
+|---|---|---|
+| `audio_transcoder` | Audio Transcoder - EAC3 5.1 (Dolby Digital Plus) | Convert DTS, FLAC, Opus and Vorbis audio to EAC3 5.1 |
+| `audio_transcode_to_stereo` | Audio Transcode to Stereo - Surround Sound Downmix | Create stereo clone from surround sound audio streams |
 
-### `ignore_metadata_unmanic`
+### Subtitle Processing
 
-Ignore files with processed metadata tag.
+| Plugin ID | Name | Description |
+|---|---|---|
+| `subtitles_transcode` | Subtitles Transcode - Keep PT-BR Only | Keep only PT-BR subtitles, remove all others |
+
+### Ignore / Filter Plugins
+
+| Plugin ID | Name | Description |
+|---|---|---|
+| `ignore_completed_tasks` | Ignore - Completed Tasks | Skip files already in completed tasks list |
+| `ignore_metadata_unmanic` | Ignore - Metadata Processed | Skip files with UNMANIC_STATUS=processed metadata |
+| `ignore_video_file_over_resolution` | Ignore - Video Over Resolution Limit | Skip files exceeding configured resolution |
+| `ignore_video_file_under_resolution` | Ignore - Video Under Resolution Limit | Skip files below configured resolution |
 
 ## Installation
 
@@ -25,6 +41,11 @@ https://raw.githubusercontent.com/marcosviniciusi/unmanic-plugins/repo/repo.json
 ```
 
 Follow [Unmanic Documentation](https://docs.unmanic.app/docs/plugins/adding_a_custom_plugin_repo/) to add this repo to your Unmanic installation.
+
+## Credits
+
+- **Josh.5** - Original author of several base plugins (video_transcoder, create_stereo_audio_clone, dts_to_dd, ignore plugins)
+- **marcosviniciusi** - Fork maintainer, VideoToolbox support, subtitle PT-BR plugin, plugin reorganization
 
 ## Links
 

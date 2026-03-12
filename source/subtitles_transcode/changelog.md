@@ -1,3 +1,8 @@
+**<span style="color:#56adda">3.4.0</span>** *(marcosviniciusi)* - Plugin reorganization
+- Renamed plugin from `equalize_subtitles_ptbr` to `subtitles_transcode` for unique identification
+- Updated plugin ID, name and tags to avoid conflicts with official repository
+- Standardized author attribution and versioning format
+
 **3.3.1** - Handle all subtitle codecs
 - CHANGED: classify_subtitle now applies to ALL subtitle codecs regardless of type
 - REMOVED: TEXT_SUBTITLE_CODECS, BITMAP_SUBTITLE_CODECS, ALL_SUBTITLE_CODECS constants
