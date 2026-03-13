@@ -22,7 +22,7 @@ These plugins work together as an Unmanic pipeline to **equalize your entire med
 |---|---|---|
 | **Video** | HEVC (H.265) | Best compression-to-quality ratio, universally supported on modern TVs and devices |
 | **Audio** | EAC3 5.1 (Dolby Digital Plus) | Native support on LG, Samsung, Sony TVs. Replaces DTS/FLAC/Opus which many TVs cannot decode |
-| **Subtitles** | PT-BR only (SRT) | Keeps only Brazilian Portuguese subtitles, removes all other languages to reduce file size |
+| **Subtitles** | PT-BR only (any format) | Keeps only PT-BR and untagged subtitles intact, removes all other languages |
 
 The result: every file in your library plays natively on LG C/G series TVs, Apple TV, Plex, Jellyfin, and virtually any modern media player — **without real-time transcoding on the server**.
 
@@ -66,10 +66,11 @@ Creates a **stereo clone** of surround sound audio streams for devices that don'
 
 Designed for Brazilian Portuguese media libraries:
 
-- **Keeps** only PT-BR subtitles embedded in the container
-- **Converts** ASS/SSA subtitle formats to SRT automatically
+- **Keeps** PT-BR subtitles intact (copied as-is, no format conversion)
+- **Keeps** untagged subtitles (streams with no language tag) to avoid losing unlabeled PT-BR tracks
 - **Removes** all other subtitle languages from the container
-- Reduces file size by removing unnecessary subtitle tracks
+- **No conversion**: Subtitles are stream-copied regardless of format (SRT, ASS, PGS, etc.)
+- Tags files with metadata to avoid reprocessing
 
 ### Ignore / Filter Plugins
 
