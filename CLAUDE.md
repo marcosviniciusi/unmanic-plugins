@@ -127,8 +127,59 @@ unmanic-plugins/
 - [x] Created `CLAUDE.md` documentation
 - [x] Created `postprocessor_otel_trace` plugin for OpenTelemetry task tracing (SigNoz/Jaeger/Tempo)
 
+## In Progress: Audio Plugin Anti-Reprocessing (2026-03-13)
+
+### Context
+
+The audio plugins (`vm_audio_transcoder` and `vm_audio_transcode_create_stereo`) lack a robust mechanism to prevent reprocessing.
+The `vm_video_transcoder` writes `-metadata unmanic_status=processed` at format level (line 100 of `source/vm_video_transcoder/lib/plugin_stream_mapper.py`),
+which is detected by `vm_ignore_metadata_unmanic` plugin. Audio plugins don't do this.
+
+### Current anti-reprocessing mechanisms
+
+- **`vm_audio_transcoder`**: Checks codec type (DTS/FLAC/Opus/Vorbis → EAC3). After conversion, codec changes, so it won't reprocess.
+  Risk: if `remove_original=False`, original DTS stream persists and plugin could create duplicate EAC3 streams.
+- **`vm_audio_transcode_create_stereo`**: Checks stream title tag `[Stereo]` via `audio_tag_already_exists()`.
+  Works but fragile — depends on title string matching.
+
+### Planned improvement for `vm_audio_transcode_create_stereo`
+
+**3-layer check in `on_library_management_file_test`** (ordered by priority — first match skips):
+
+1. **Format-level metadata tag** (fastest exit): Check for custom tag (e.g., `unmanic_stereo=processed`) in file format tags via ffprobe.
+   If found → skip file entirely, don't check further conditions.
+2. **Channel count + language check**: If no tag, verify if a ≤2ch stream already exists for the same language as each surround stream.
+   If yes → skip (already has a stereo version).
+3. **Codec + channels check**: If no match above, check if a stream with the configured encoder codec (AAC/AC3) + 2 channels exists alongside the surround stream.
+   If yes → skip.
+
+**Writing the tag**: When the plugin DOES process, add `-metadata unmanic_stereo=processed` to FFmpeg advanced_options
+so it's written to the output file at format level.
+
+### Technical notes for implementation
+
+- **Where to add the tag in FFmpeg args**: In `on_worker_process`, after confirming `streams_need_processing()`, call
+  `mapper.set_ffmpeg_advanced_options(**{'-metadata': 'unmanic_stereo=processed'})` BEFORE `get_ffmpeg_args()`.
+  This adds it to `self.advanced_options` which is placed in the command before stream mappings.
+- **Tag detection in `on_library_management_file_test`**: Use ffprobe JSON output to check `format.tags` for the tag,
+  similar to how `vm_ignore_metadata_unmanic/plugin.py` does it (subprocess call to ffprobe with `-print_format json -show_format`).
+- **Previous failed attempt**: The tag wasn't being inserted because of how `__build_args` handles kwargs —
+  if `-metadata` key already exists in options, it replaces rather than appending. Since the stereo plugin
+  doesn't use `-metadata` in advanced_options currently, this should work. Stream-level metadata uses
+  different keys (`-metadata:s:a:0`) so no conflict.
+- **Key files to modify**:
+  - `source/vm_audio_transcode_create_stereo/plugin.py` — add tag check in `on_library_management_file_test`, add tag writing in `on_worker_process`
+  - `source/vm_audio_transcode_create_stereo/lib/ffmpeg/stream_mapper.py` — potentially no changes needed (tag goes in advanced_options, not stream_encoding)
+
+### Also consider for `vm_audio_transcoder`
+
+- Same pattern could be applied: write `unmanic_audio=processed` tag and check it first.
+- Would fix the `remove_original=False` duplicate EAC3 issue.
+
 ## Future Tasks / Considerations
 
+- [ ] Implement anti-reprocessing tag for `vm_audio_transcode_create_stereo` (see section above)
+- [ ] Consider same pattern for `vm_audio_transcoder`
 - [ ] Update `config.json` repository ID if needed (currently `repository.vinicima`)
 - [ ] Add icons for plugins that are missing them (e.g., `subtitles_transcode`)
 - [ ] Consider adding `platform` field to plugins that are missing it
