@@ -92,6 +92,7 @@ These plugins control which files enter the processing pipeline:
 
 | Plugin | Purpose |
 |---|---|
+| `ignore_files_recently_modified` | Skip files modified less than X time ago (prevents processing files still being written/downloaded) |
 | `vm_ignore_task_history` | Skip files already processed by Unmanic |
 | `vm_ignore_metadata_unmanic` | **Completely ignore** files with `UNMANIC_FULL_PIPELINE=processed` tag (runs LAST, overrides all) |
 | `vm_ignore_video_over_res` | Skip files exceeding a configured resolution limit |
@@ -123,17 +124,18 @@ Sends structured log records for every completed task to an **OpenTelemetry-comp
 For a fully equalized media library, configure the plugins in this order in Unmanic:
 
 ```
-1. vm_ignore_task_history          ← Skip already-processed files
-2. vm_ignore_metadata_unmanic      ← Skip files tagged as processed
-3. vm_ignore_video_over_res        ← Optional: skip 4K if targeting 1080p
-4. vm_ignore_video_under_res       ← Optional: skip low-res files
-5. vm_video_transcoder             ← Transcode video to HEVC
-6. vm_audio_transcoder             ← Convert audio to EAC3 5.1
-7. vm_audio_transcode_create_stereo ← Add stereo downmix track
-8. vm_audio_remove_duplicates      ← Remove duplicate audio streams
-9. vm_subtitles_transcode          ← Keep PT-BR subtitles only
-10. vm_tag_pipeline_complete       ← Write UNMANIC_FULL_PIPELINE=processed tag (LAST)
-11. vm_postprocessor_otel_trace    ← Log results to OTEL backend
+1. ignore_files_recently_modified   ← Skip files modified recently (still being written/downloaded)
+2. vm_ignore_task_history           ← Skip already-processed files
+3. vm_ignore_metadata_unmanic       ← Skip files tagged as fully processed
+4. vm_ignore_video_over_res         ← Optional: skip 4K if targeting 1080p
+5. vm_ignore_video_under_res        ← Optional: skip low-res files
+6. vm_video_transcoder              ← Transcode video to HEVC
+7. vm_audio_transcoder              ← Convert audio to EAC3 5.1
+8. vm_audio_transcode_create_stereo ← Add stereo downmix track
+9. vm_audio_remove_duplicates       ← Remove duplicate audio streams
+10. vm_subtitles_transcode          ← Keep PT-BR subtitles only
+11. vm_tag_pipeline_complete        ← Write UNMANIC_FULL_PIPELINE=processed tag (LAST)
+12. vm_postprocessor_otel_trace     ← Log results to OTEL backend
 ```
 
 ## Installation
