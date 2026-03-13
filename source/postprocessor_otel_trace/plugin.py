@@ -302,7 +302,6 @@ def _send_log(settings, data):
             'unmanic.destination.count': task_log['destination']['count'],
             'log.type':                 'unmanic_task_result',
         },
-        resource=resource,
     )
 
     otel_logger.emit(record)
