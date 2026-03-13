@@ -127,8 +127,95 @@ unmanic-plugins/
 - [x] Created `CLAUDE.md` documentation
 - [x] Created `postprocessor_otel_trace` plugin for OpenTelemetry task tracing (SigNoz/Jaeger/Tempo)
 
+## Completed: Audio Plugin Anti-Reprocessing (2026-03-13)
+
+### Context
+
+The audio plugins (`vm_audio_transcoder` and `vm_audio_transcode_create_stereo`) lack a robust mechanism to prevent reprocessing.
+The `vm_video_transcoder` writes `-metadata unmanic_status=processed` at format level (line 100 of `source/vm_video_transcoder/lib/plugin_stream_mapper.py`),
+which is detected by `vm_ignore_metadata_unmanic` plugin. Audio plugins don't do this.
+
+### Current anti-reprocessing mechanisms
+
+- **`vm_audio_transcoder`**: Checks codec type (DTS/FLAC/Opus/Vorbis → EAC3). After conversion, codec changes, so it won't reprocess.
+  Risk: if `remove_original=False`, original DTS stream persists and plugin could create duplicate EAC3 streams.
+- **`vm_audio_transcode_create_stereo`**: Checks stream title tag `[Stereo]` via `audio_tag_already_exists()`.
+  Works but fragile — depends on title string matching.
+
+### Planned improvement for `vm_audio_transcode_create_stereo`
+
+**3-layer check in `on_library_management_file_test`** (ordered by priority — first match skips):
+
+1. **Format-level metadata tag** (fastest exit): Check for custom tag (e.g., `unmanic_stereo=processed`) in file format tags via ffprobe.
+   If found → skip file entirely, don't check further conditions.
+2. **Channel count + language check**: If no tag, verify if a ≤2ch stream already exists for the same language as each surround stream.
+   If yes → skip (already has a stereo version).
+3. **Codec + channels check**: If no match above, check if a stream with the configured encoder codec (AAC/AC3) + 2 channels exists alongside the surround stream.
+   If yes → skip.
+
+**Writing the tag**: When the plugin DOES process, add `-metadata unmanic_stereo=processed` to FFmpeg advanced_options
+so it's written to the output file at format level.
+
+### Technical notes for implementation
+
+- **Where to add the tag in FFmpeg args**: In `on_worker_process`, after confirming `streams_need_processing()`, call
+  `mapper.set_ffmpeg_advanced_options(**{'-metadata': 'unmanic_stereo=processed'})` BEFORE `get_ffmpeg_args()`.
+  This adds it to `self.advanced_options` which is placed in the command before stream mappings.
+- **Tag detection in `on_library_management_file_test`**: Use ffprobe JSON output to check `format.tags` for the tag,
+  similar to how `vm_ignore_metadata_unmanic/plugin.py` does it (subprocess call to ffprobe with `-print_format json -show_format`).
+- **Previous failed attempt**: The tag wasn't being inserted because of how `__build_args` handles kwargs —
+  if `-metadata` key already exists in options, it replaces rather than appending. Since the stereo plugin
+  doesn't use `-metadata` in advanced_options currently, this should work. Stream-level metadata uses
+  different keys (`-metadata:s:a:0`) so no conflict.
+- **Key files to modify**:
+  - `source/vm_audio_transcode_create_stereo/plugin.py` — add tag check in `on_library_management_file_test`, add tag writing in `on_worker_process`
+  - `source/vm_audio_transcode_create_stereo/lib/ffmpeg/stream_mapper.py` — potentially no changes needed (tag goes in advanced_options, not stream_encoding)
+
+### Stereo stream title fix
+
+Current `generate_audio_stream_tag` produces generic titles like `EAC3 5.1 [Stereo]` which are confusing.
+New title format should reflect the REAL output specs:
+- **Title**: `{Language} {CODEC} stereo (Padrão)` — e.g., `Korean AAC stereo (Padrão)`
+- **Specs shown by player**: `AAC Stereo / Advanced Audio Codec / 2.0 / 48 kHz / 128 kbps`
+- Language comes from source stream's `tags.language`
+- Codec comes from the configured encoder setting (aac/ac3)
+- "stereo" and "(Padrão)" are fixed text
+
+### FFmpeg command structure (single command does everything)
+
+```
+ffmpeg -hide_banner -loglevel info
+  -i input.mkv
+  -strict -2 -max_muxing_queue_size 4096
+  -metadata unmanic_stereo=processed          ← format-level tag (in advanced_options)
+  -map 0:v:0 -c:v:0 copy                     ← copy video
+  -map 0:a:0 -c:a:0 copy                     ← copy surround original
+  -map 0:a:0 -c:a:1 aac -ac 2                ← create stereo downmix
+  -metadata:s:a:1 title="Korean AAC stereo (Padrão)"  ← stream-level title
+  -metadata:s:a:1 language=kor                ← stream-level language
+  -y output.mkv
+```
+
+### Files to modify
+
+| File | Changes |
+|------|---------|
+| `source/vm_audio_transcode_create_stereo/plugin.py` | 3-layer check, tag writing, new title format |
+| `source/vm_audio_transcode_create_stereo/info.json` | Bump version to 0.2.0 |
+| `source/vm_audio_transcode_create_stereo/changelog.md` | Add 0.2.0 entry |
+| `source/vm_audio_transcode_create_stereo/description.md` | Update description if needed |
+| `README.md` | Update stereo plugin description |
+| `CLAUDE.md` | Document completed work |
+
+### Also consider for `vm_audio_transcoder`
+
+- Same pattern could be applied: write `unmanic_audio=processed` tag and check it first.
+- Would fix the `remove_original=False` duplicate EAC3 issue.
+
 ## Future Tasks / Considerations
 
+- [x] Implement anti-reprocessing tag for `vm_audio_transcode_create_stereo` (v0.2.0)
+- [ ] Consider same pattern for `vm_audio_transcoder`
 - [ ] Update `config.json` repository ID if needed (currently `repository.vinicima`)
 - [ ] Add icons for plugins that are missing them (e.g., `subtitles_transcode`)
 - [ ] Consider adding `platform` field to plugins that are missing it

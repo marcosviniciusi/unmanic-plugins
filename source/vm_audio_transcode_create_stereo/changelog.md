@@ -1,3 +1,12 @@
+**<span style="color:#56adda">0.2.0</span>** *(marcosviniciusi)*
+- Added 3-layer anti-reprocessing mechanism:
+  - Layer 1: Format-level metadata tag `UNMANIC_STEREO=processed` (fastest skip)
+  - Layer 2: Channel count + language check (≤2ch stream with same language already exists)
+  - Layer 3: Codec + channels check (configured encoder codec with 2 channels already exists)
+- Writes `UNMANIC_STEREO=processed` metadata tag to output file to prevent future reprocessing
+- Improved stereo stream titles to show real output specs: `{Language} {CODEC} stereo (Padrão)`
+- Maintains backwards compatibility with legacy `[Stereo]` tag detection
+
 **<span style="color:#56adda">0.1.1</span>** *(marcosviniciusi)*
 - Renamed plugin from `audio_transcode_to_stereo` to `audio_transcode_create_stereo` (better reflects the "create" action)
 
