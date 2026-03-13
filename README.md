@@ -30,7 +30,7 @@ The result: every file in your library plays natively on LG C/G series TVs, Appl
 
 ### Video Processing
 
-#### `video_transcoder` — Video Transcoder (HW Accelerated with Metadata)
+#### `vm_video_transcoder` — Video Transcoder (HW Accelerated with Metadata)
 
 Transcodes video streams to HEVC with full hardware acceleration support:
 
@@ -47,7 +47,7 @@ Preserves metadata, chapter markers, and stream disposition during transcoding.
 
 ### Audio Processing
 
-#### `audio_transcoder` — Audio Transcoder (EAC3 5.1 / Dolby Digital Plus)
+#### `vm_audio_transcoder` — Audio Transcoder (EAC3 5.1 / Dolby Digital Plus)
 
 Converts incompatible audio codecs to **EAC3 5.1 (Dolby Digital Plus)**:
 
@@ -56,13 +56,13 @@ Converts incompatible audio codecs to **EAC3 5.1 (Dolby Digital Plus)**:
 - **Downmix**: Sources with more than 6 channels (e.g., 7.1 DTS-HD MA) are downmixed to 5.1
 - **Preserves**: AAC, AC3, and existing EAC3 streams are kept untouched
 
-#### `audio_transcode_create_stereo` — Surround Sound Downmix to Stereo
+#### `vm_audio_transcode_create_stereo` — Surround Sound Downmix to Stereo
 
 Creates a **stereo clone** of surround sound audio streams for devices that don't support multichannel audio (phones, laptops, Bluetooth headphones). The original surround track is preserved alongside the new stereo track.
 
 ### Subtitle Processing
 
-#### `subtitles_transcode` — Keep PT-BR Subtitles Only
+#### `vm_subtitles_transcode` — Keep PT-BR Subtitles Only
 
 Designed for Brazilian Portuguese media libraries:
 
@@ -78,14 +78,14 @@ These plugins control which files enter the processing pipeline:
 
 | Plugin | Purpose |
 |---|---|
-| `ignore_task_history` | Skip files already processed by Unmanic |
-| `ignore_metadata_unmanic` | Skip files with `UNMANIC_STATUS=processed` metadata tag |
-| `ignore_video_over_res` | Skip files exceeding a configured resolution limit |
-| `ignore_video_under_res` | Skip files below a configured resolution limit |
+| `vm_ignore_task_history` | Skip files already processed by Unmanic |
+| `vm_ignore_metadata_unmanic` | Skip files with `UNMANIC_STATUS=processed` metadata tag |
+| `vm_ignore_video_over_res` | Skip files exceeding a configured resolution limit |
+| `vm_ignore_video_under_res` | Skip files below a configured resolution limit |
 
 ### Observability
 
-#### `postprocessor_otel_trace` — OpenTelemetry Task Log
+#### `vm_postprocessor_otel_trace` — OpenTelemetry Task Log
 
 Sends structured log records for every completed task to an **OpenTelemetry-compatible backend** (SigNoz, Jaeger, Grafana Tempo) via OTLP HTTP. Includes:
 
@@ -99,15 +99,15 @@ Sends structured log records for every completed task to an **OpenTelemetry-comp
 For a fully equalized media library, configure the plugins in this order in Unmanic:
 
 ```
-1. ignore_task_history          ← Skip already-processed files
-2. ignore_metadata_unmanic      ← Skip files tagged as processed
-3. ignore_video_over_res        ← Optional: skip 4K if targeting 1080p
-4. ignore_video_under_res       ← Optional: skip low-res files
-5. video_transcoder             ← Transcode video to HEVC
-6. audio_transcoder             ← Convert audio to EAC3 5.1
-7. audio_transcode_create_stereo ← Add stereo downmix track
-8. subtitles_transcode          ← Keep PT-BR subtitles only
-9. postprocessor_otel_trace     ← Log results to OTEL backend
+1. vm_ignore_task_history          ← Skip already-processed files
+2. vm_ignore_metadata_unmanic      ← Skip files tagged as processed
+3. vm_ignore_video_over_res        ← Optional: skip 4K if targeting 1080p
+4. vm_ignore_video_under_res       ← Optional: skip low-res files
+5. vm_video_transcoder             ← Transcode video to HEVC
+6. vm_audio_transcoder             ← Convert audio to EAC3 5.1
+7. vm_audio_transcode_create_stereo ← Add stereo downmix track
+8. vm_subtitles_transcode          ← Keep PT-BR subtitles only
+9. vm_postprocessor_otel_trace     ← Log results to OTEL backend
 ```
 
 ## Installation

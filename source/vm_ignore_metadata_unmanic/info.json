@@ -1,0 +1,19 @@
+{
+    "author": "marcosviniciusi",
+    "compatibility": [
+        1,
+        2
+    ],
+    "description": "Ignore files with processed metadata tag (UNMANIC_STATUS=processed).",
+    "icon": "https://raw.githubusercontent.com/Josh5/unmanic.plugin.ignore_files_recently_modified/master/icon.png",
+    "id": "vm_ignore_metadata_unmanic",
+    "name": "Ignore - Metadata Processed",
+    "platform": [
+        "all"
+    ],
+    "priorities": {
+        "on_library_management_file_test": 2
+    },
+    "tags": "library file test,ignore,filter,metadata",
+    "version": "0.0.2"
+}

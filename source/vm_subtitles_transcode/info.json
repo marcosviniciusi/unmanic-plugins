@@ -1,0 +1,16 @@
+{
+    "author": "marcosviniciusi",
+    "compatibility": [
+        2
+    ],
+    "description": "Keeps only PT-BR subtitles embedded in the MKV, removes everything else",
+    "icon": "",
+    "id": "vm_subtitles_transcode",
+    "name": "Subtitles Transcode - Keep PT-BR Only",
+    "priorities": {
+        "on_library_management_file_test": 50,
+        "on_worker_process": 50
+    },
+    "tags": "subtitle,portuguese,ffmpeg,library file test",
+    "version": "3.4.0"
+}
