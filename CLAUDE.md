@@ -16,6 +16,7 @@ Repository ID: `repository.vinicima` (defined in `config.json`).
 | `vm_audio_transcode_create_stereo` | Audio Transcode Create Stereo - Surround Sound Downmix | 0.2.0 | Josh.5 | Audio |
 | `vm_audio_remove_duplicates` | Audio Remove Duplicates - Deduplicate Audio Streams | 0.1.0 | marcosviniciusi | Audio |
 | `vm_subtitles_transcode` | Subtitles Transcode - Keep PT-BR Only | 3.4.0 | marcosviniciusi | Subtitle |
+| `vm_tag_pipeline_complete` | Tag Pipeline Complete - Write Full Pipeline Tag | 0.1.0 | marcosviniciusi | Pipeline |
 
 ### Post-Processor Plugins
 
@@ -28,7 +29,7 @@ Repository ID: `repository.vinicima` (defined in `config.json`).
 | Dir / Plugin ID | Name | Version | Original Author |
 |---|---|---|---|
 | `vm_ignore_task_history` | Ignore - Task History | 0.0.3 | Josh.5 |
-| `vm_ignore_metadata_unmanic` | Ignore - Metadata Processed | 0.0.2 | marcosviniciusi |
+| `vm_ignore_metadata_unmanic` | Ignore - Full Pipeline Completed | 0.0.3 | marcosviniciusi |
 | `vm_ignore_video_over_res` | Ignore - Video Over Resolution Limit | 0.0.4 | Josh.5 |
 | `vm_ignore_video_under_res` | Ignore - Video Under Resolution Limit | 0.0.4 | Josh.5 |
 
@@ -317,6 +318,39 @@ The `vm_video_transcoder` had 3 bugs causing reprocessing:
 | `source/vm_video_transcoder/lib/plugin_stream_mapper.py` | Write metadata tag in all modes |
 | `source/vm_video_transcoder/info.json` | Bump version |
 | `source/vm_video_transcoder/changelog.md` | Add entry |
+
+## New: Full Pipeline Tag System (2026-03-13)
+
+### Concept
+
+A single, authoritative tag `UNMANIC_FULL_PIPELINE=processed` that guarantees a file has passed through
+the entire pipeline. This replaces relying on individual plugin tags for the "should I process?" decision.
+
+### Components
+
+1. **`vm_ignore_metadata_unmanic`** (edited) — checks for `UNMANIC_FULL_PIPELINE=processed` tag.
+   If found → `add_file_to_pending_tasks = False` → file never enters the queue.
+   Runs at priority 2 (earliest).
+
+2. **`vm_tag_pipeline_complete`** (new plugin) — last processing step (`on_worker_process`).
+   Remuxes the file with `-metadata unmanic_full_pipeline=processed`.
+   Runs with high priority number (after all other processing plugins).
+
+### Pipeline order with new plugin
+
+```
+1. vm_ignore_metadata_unmanic       ← checks UNMANIC_FULL_PIPELINE tag (priority 2)
+2. vm_ignore_task_history
+3. vm_ignore_video_over_res
+4. vm_ignore_video_under_res
+5. vm_video_transcoder              ← on_worker_process priority 1
+6. vm_audio_transcoder              ← on_worker_process priority 3
+7. vm_audio_transcode_create_stereo ← on_worker_process priority 5
+8. vm_audio_remove_duplicates       ← on_worker_process priority 6
+9. vm_subtitles_transcode           ← on_worker_process priority 7
+10. vm_tag_pipeline_complete        ← NEW: writes UNMANIC_FULL_PIPELINE=processed (priority 99)
+11. vm_postprocessor_otel_trace     ← post-processor
+```
 
 ## Future Tasks / Considerations
 

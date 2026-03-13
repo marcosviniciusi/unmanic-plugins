@@ -28,16 +28,19 @@ import json
 # Configure plugin logger
 logger = logging.getLogger("Unmanic.Plugin.vm_ignore_metadata_unmanic")
 
+METADATA_TAG_KEY = 'UNMANIC_FULL_PIPELINE'
+METADATA_TAG_VALUE = 'processed'
 
-def check_file_has_metadata(path):
+
+def check_file_has_pipeline_tag(path):
     """
-    Check if file has UNMANIC_STATUS=processed metadata using ffprobe
-    
+    Check if file has UNMANIC_FULL_PIPELINE=processed format-level metadata tag.
+    If this tag exists, the file has already been through the full processing pipeline.
+
     :param path: Path to the file
-    :return: True if metadata exists with matching value, False otherwise
+    :return: True if tag exists, False otherwise
     """
     try:
-        # Use ffprobe to get file metadata in JSON format
         command = [
             'ffprobe',
             '-v', 'quiet',
@@ -45,37 +48,28 @@ def check_file_has_metadata(path):
             '-show_format',
             path
         ]
-        
         result = subprocess.run(command, capture_output=True, text=True, timeout=30)
-        
         if result.returncode != 0:
-            logger.warning(f"ffprobe failed for file: {path}")
+            logger.warning("ffprobe failed for file: '{}'".format(path))
             return False
-        
-        # Parse JSON output
+
         probe_data = json.loads(result.stdout)
-        
-        # Check if format tags exist
         if 'format' in probe_data and 'tags' in probe_data['format']:
-            tags = probe_data['format']['tags']
-            
-            # Check for UNMANIC_STATUS metadata (case-insensitive)
-            for key, value in tags.items():
-                if key.upper() == 'UNMANIC_STATUS':
-                    if value == 'processed':
-                        logger.debug(f"Found UNMANIC_STATUS=processed in file: {path}")
-                        return True
-        
+            for key, value in probe_data['format']['tags'].items():
+                if key.upper() == METADATA_TAG_KEY and value == METADATA_TAG_VALUE:
+                    logger.debug("Found {}={} in file: '{}'".format(
+                        METADATA_TAG_KEY, METADATA_TAG_VALUE, path))
+                    return True
         return False
-        
+
     except subprocess.TimeoutExpired:
-        logger.error(f"ffprobe timed out for file: {path}")
+        logger.error("ffprobe timed out for file: '{}'".format(path))
         return False
     except json.JSONDecodeError:
-        logger.error(f"Failed to parse ffprobe output for file: {path}")
+        logger.error("Failed to parse ffprobe output for file: '{}'".format(path))
         return False
     except Exception as e:
-        logger.error(f"Error checking metadata for file {path}: {str(e)}")
+        logger.error("Error checking metadata for file '{}': {}".format(path, str(e)))
         return False
 
 
@@ -90,11 +84,16 @@ def on_library_management_file_test(data):
 
     :param data:
     :return:
-    
+
     """
-    if check_file_has_metadata(data.get('path')):
-        # File already has the processed metadata, ignore it
+    abspath = data.get('path')
+
+    if check_file_has_pipeline_tag(abspath):
+        # File already completed the full pipeline — IGNORE COMPLETELY
+        # This runs with high priority (last) so it overrides any other plugin's decision
         data['add_file_to_pending_tasks'] = False
-        logger.info(f"File already processed (has UNMANIC_STATUS=processed). Ignoring: {data.get('path')}")
+        logger.info("File has {}={} tag — full pipeline already completed. "
+                     "IGNORING completely: '{}'".format(
+                         METADATA_TAG_KEY, METADATA_TAG_VALUE, abspath))
 
     return data

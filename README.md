@@ -93,9 +93,19 @@ These plugins control which files enter the processing pipeline:
 | Plugin | Purpose |
 |---|---|
 | `vm_ignore_task_history` | Skip files already processed by Unmanic |
-| `vm_ignore_metadata_unmanic` | Skip files with `UNMANIC_STATUS=processed` metadata tag |
+| `vm_ignore_metadata_unmanic` | **Completely ignore** files with `UNMANIC_FULL_PIPELINE=processed` tag (runs LAST, overrides all) |
 | `vm_ignore_video_over_res` | Skip files exceeding a configured resolution limit |
 | `vm_ignore_video_under_res` | Skip files below a configured resolution limit |
+
+### Pipeline Tagging
+
+#### `vm_tag_pipeline_complete` — Tag Pipeline Complete
+
+Writes the **`UNMANIC_FULL_PIPELINE=processed`** metadata tag to mark files that have completed the entire processing pipeline. This plugin remuxes the file (copies all streams without re-encoding) and adds the tag at the format level.
+
+- **Must be the LAST processing step** in the pipeline
+- **Works with** `vm_ignore_metadata_unmanic` — which runs last among file test plugins (priority 999) and completely ignores files with this tag
+- **No re-encoding**: All streams are copied untouched, only metadata is added
 
 ### Observability
 
@@ -122,7 +132,8 @@ For a fully equalized media library, configure the plugins in this order in Unma
 7. vm_audio_transcode_create_stereo ← Add stereo downmix track
 8. vm_audio_remove_duplicates      ← Remove duplicate audio streams
 9. vm_subtitles_transcode          ← Keep PT-BR subtitles only
-10. vm_postprocessor_otel_trace    ← Log results to OTEL backend
+10. vm_tag_pipeline_complete       ← Write UNMANIC_FULL_PIPELINE=processed tag (LAST)
+11. vm_postprocessor_otel_trace    ← Log results to OTEL backend
 ```
 
 ## Installation
