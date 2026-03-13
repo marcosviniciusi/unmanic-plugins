@@ -1,5 +1,21 @@
-This plugin ignores files that have already been processed by checking for a specific metadata tag.
 
-If a file contains the configured metadata key with the expected value, it will be skipped and not added to the processing queue.
+---
 
-This prevents files from being unnecessarily reprocessed after they have already been handled by Unmanic.
+### What it does
+
+**Completely ignores** files that have already completed the full processing pipeline by checking for the `UNMANIC_FULL_PIPELINE=processed` metadata tag.
+
+This plugin runs with **priority 999** (last among all file test plugins), meaning it has the **final word** — if the tag exists, no other plugin can re-add the file to the processing queue.
+
+### How it works
+
+1. During library scan, every file goes through all file test plugins in priority order
+2. Other plugins may set `add_file_to_pending_tasks = True` if they find work to do
+3. This plugin runs **last** and checks for the `UNMANIC_FULL_PIPELINE=processed` tag
+4. If the tag exists, it sets `add_file_to_pending_tasks = False` — **overriding all previous plugins**
+
+### Works with
+
+This plugin works together with **Tag Pipeline Complete** (`vm_tag_pipeline_complete`), which writes the `UNMANIC_FULL_PIPELINE=processed` tag as the last processing step. Once a file passes through the entire pipeline, it gets tagged and will never re-enter the queue.
+
+---

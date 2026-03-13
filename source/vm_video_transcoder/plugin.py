@@ -218,11 +218,17 @@ def on_library_management_file_test(data):
 
     """
 
-    # Get settings (do not persist defaults during worker/library execution)
-    settings = Settings(library_id=data.get('library_id'), apply_default_fallbacks=False)
-
     # Get the path to the file
     abspath = data.get('path')
+
+    # PRIORITY CHECK: If file already has processed metadata, skip entirely — no exceptions
+    if check_file_has_processed_metadata(abspath):
+        logger.debug(
+            "File '%s' has UNMANIC_STATUS=processed metadata. Skipping — already processed.", abspath)
+        return
+
+    # Get settings (do not persist defaults during worker/library execution)
+    settings = Settings(library_id=data.get('library_id'), apply_default_fallbacks=False)
 
     # Get file probe
     probe = Probe.init_probe(data, logger, allowed_mimetypes=['video'])
@@ -236,12 +242,6 @@ def on_library_management_file_test(data):
 
     # Check if this file needs to be processed
     if mapper.streams_need_processing():
-        # If force_transcode is enabled, check if file already has processed metadata
-        if settings.get_setting('force_transcode') and check_file_has_processed_metadata(abspath):
-            logger.debug(
-                "File '%s' has UNMANIC_STATUS=processed metadata and force_transcode is enabled. Ignoring this file.",
-                abspath)
-            return
         # Mark this file to be added to the pending tasks
         data['add_file_to_pending_tasks'] = True
         logger.debug("File '%s' should be added to task list. Plugin found streams require processing.", abspath)
@@ -273,11 +273,16 @@ def on_worker_process(data):
 
     worker_log = data.get('worker_log')
 
-    # Get settings (do not persist defaults during worker execution)
-    settings = Settings(library_id=data.get('library_id'), apply_default_fallbacks=False)
-
     # Get the path to the file
     abspath = data.get('file_in')
+
+    # PRIORITY CHECK: If file already has processed metadata, skip entirely — no exceptions
+    if check_file_has_processed_metadata(abspath):
+        tools.append_worker_log(worker_log, "File already has UNMANIC_STATUS=processed metadata - skipping")
+        return
+
+    # Get settings (do not persist defaults during worker execution)
+    settings = Settings(library_id=data.get('library_id'), apply_default_fallbacks=False)
 
     # Get file probe
     tools.append_worker_log(worker_log, "Probing file: {}".format(abspath))
@@ -295,12 +300,6 @@ def on_worker_process(data):
     tools.append_worker_log(worker_log, "Checking what streams need processing...")
     needs_processing = mapper.streams_need_processing()
     if needs_processing:
-        # If force_transcode is enabled, check if file already has processed metadata
-        if settings.get_setting('force_transcode') and check_file_has_processed_metadata(abspath):
-            # Do not process this file, it has been processed before
-            tools.append_worker_log(worker_log, "File already has processed metadata - skipping")
-            return
-
         # Set the output file
         if settings.get_setting('keep_container'):
             # Do not remux the file. Keep the file out in the same container

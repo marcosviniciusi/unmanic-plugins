@@ -1,3 +1,8 @@
+**<span style="color:#56adda">0.3.1</span>** *(marcosviniciusi)*
+- Fix: Write `unmanic_status=processed` metadata tag in ALL modes (basic, standard, advanced) — previously only written in standard mode
+- Fix: Check metadata tag FIRST in `on_library_management_file_test` and `on_worker_process` — previously only checked when `force_transcode` was enabled
+- Prevents reprocessing of already-processed files regardless of mode, smart filters, or force_transcode settings
+
 **<span style="color:#56adda">0.3.0</span>** *(marcosviniciusi)*
 - Standardized plugin name and author attribution for custom repository
 - Updated tags and description for better discoverability
