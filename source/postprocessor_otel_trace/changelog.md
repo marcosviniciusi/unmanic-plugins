@@ -1,3 +1,6 @@
+**<span style="color:#56adda">0.3.2</span>** *(marcosviniciusi)*
+- FIX: Removed unsupported 'resource' parameter from LogRecord constructor (resource is set at LoggerProvider level)
+
 **<span style="color:#56adda">0.3.1</span>** *(marcosviniciusi)*
 - FIX: Fixed "'Logger' object has no attribute '_logger'" error by using LogRecord directly instead of internal API
 
