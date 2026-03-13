@@ -66,6 +66,14 @@ Creates a **stereo clone** of surround sound audio streams for devices that don'
   3. Codec + channels detection — detects existing encoder match with 2 channels
 - **Descriptive titles**: Stereo tracks are titled with real output specs (e.g., `Korean AAC stereo (Padrão)`) instead of generic `[Stereo]` tags
 
+#### `vm_audio_remove_duplicates` — Deduplicate Audio Streams
+
+Removes **duplicate audio streams** from media files. Two streams are considered duplicates when all specs match: codec, channels, language, title, and bitrate. Keeps only the first occurrence of each unique audio track.
+
+- **Use case**: Cleans up files that were processed multiple times by audio transcoding or stereo downmix plugins
+- **Anti-reprocessing**: Tags files with `UNMANIC_FIX_AUDIO=processed` to prevent re-scanning
+- **Non-destructive**: Copies all non-audio streams (video, subtitles, data) untouched
+
 ### Subtitle Processing
 
 #### `vm_subtitles_transcode` — Keep PT-BR Subtitles Only
@@ -112,8 +120,9 @@ For a fully equalized media library, configure the plugins in this order in Unma
 5. vm_video_transcoder             ← Transcode video to HEVC
 6. vm_audio_transcoder             ← Convert audio to EAC3 5.1
 7. vm_audio_transcode_create_stereo ← Add stereo downmix track
-8. vm_subtitles_transcode          ← Keep PT-BR subtitles only
-9. vm_postprocessor_otel_trace     ← Log results to OTEL backend
+8. vm_audio_remove_duplicates      ← Remove duplicate audio streams
+9. vm_subtitles_transcode          ← Keep PT-BR subtitles only
+10. vm_postprocessor_otel_trace    ← Log results to OTEL backend
 ```
 
 ## Installation

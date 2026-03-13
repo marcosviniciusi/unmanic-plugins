@@ -13,7 +13,8 @@ Repository ID: `repository.vinicima` (defined in `config.json`).
 |---|---|---|---|---|
 | `vm_video_transcoder` | Video Transcoder - HW Accelerated with Metadata | 0.3.0 | Josh.5 | Video |
 | `vm_audio_transcoder` | Audio Transcoder - EAC3 5.1 (Dolby Digital Plus) | 1.1.0 | Josh.5 | Audio |
-| `vm_audio_transcode_create_stereo` | Audio Transcode Create Stereo - Surround Sound Downmix | 0.1.1 | Josh.5 | Audio |
+| `vm_audio_transcode_create_stereo` | Audio Transcode Create Stereo - Surround Sound Downmix | 0.2.0 | Josh.5 | Audio |
+| `vm_audio_remove_duplicates` | Audio Remove Duplicates - Deduplicate Audio Streams | 0.1.0 | marcosviniciusi | Audio |
 | `vm_subtitles_transcode` | Subtitles Transcode - Keep PT-BR Only | 3.4.0 | marcosviniciusi | Subtitle |
 
 ### Post-Processor Plugins
@@ -80,6 +81,11 @@ unmanic-plugins/
     │   ├── lib/ffmpeg/
     │   └── ...
     ├── audio_transcode_create_stereo/      # Surround to stereo downmix
+    │   ├── info.json
+    │   ├── plugin.py
+    │   ├── lib/ffmpeg/
+    │   └── ...
+    ├── audio_remove_duplicates/        # Remove duplicate audio streams
     │   ├── info.json
     │   ├── plugin.py
     │   ├── lib/ffmpeg/
@@ -211,6 +217,70 @@ ffmpeg -hide_banner -loglevel info
 
 - Same pattern could be applied: write `unmanic_audio=processed` tag and check it first.
 - Would fix the `remove_original=False` duplicate EAC3 issue.
+
+## Completed: New Plugin — vm_audio_remove_duplicates (2026-03-13)
+
+### Purpose
+
+Remove duplicate audio streams from media files. A "duplicate" is defined as two or more audio streams
+where ALL of the following specs are identical:
+- `codec_name` (aac, ac3, eac3, etc.)
+- `channels` (2, 6, 8, etc.)
+- `language` (por, eng, kor, etc.)
+- `title` / tag
+- `bit_rate` / bitrate
+
+### Real-world example
+
+File with 3x identical `English AAC stereo` streams (AAC Stereo / 2.0 / 48 kHz / 128 kbps).
+Plugin keeps only the first one, removes the other 2.
+
+### Logic
+
+**`on_library_management_file_test`**:
+1. Check `UNMANIC_FIX_AUDIO=processed` tag → skip if found
+2. Probe all audio streams, group by (codec, channels, language, title, bitrate)
+3. If any group has >1 stream → add to processing queue
+
+**`on_worker_process`**:
+1. Probe all streams
+2. For each audio stream group, keep the first, skip mapping the rest
+3. Copy all non-audio streams (video, subtitle, data, attachment) as-is
+4. Write `-metadata unmanic_fix_audio=processed` to output
+5. Build and execute FFmpeg command
+
+### Plugin structure
+
+- Dir: `source/vm_audio_remove_duplicates/`
+- ID: `vm_audio_remove_duplicates`
+- Name: `Audio Remove Duplicates - Deduplicate Audio Streams`
+- Author: `marcosviniciusi`
+- Version: `0.1.0`
+- Hooks: `on_library_management_file_test` (priority 100, after audio plugins), `on_worker_process` (priority 6, after stereo)
+- Tag: `unmanic_fix_audio=processed`
+- Needs own lib/ffmpeg (copy from stereo plugin as base, only needs Probe and Parser)
+
+### FFmpeg command structure
+
+```
+ffmpeg -hide_banner -loglevel info
+  -i input.mkv
+  -metadata unmanic_fix_audio=processed
+  -map 0:v:0 -c:v copy                  ← copy all video
+  -map 0:a:0 -c:a:0 copy                ← keep first English AAC stereo
+  (skip 0:a:1 and 0:a:2 — duplicates)   ← removed
+  -map 0:s:0 -c:s copy                  ← copy all subtitles
+  -y output.mkv
+```
+
+### Pipeline order
+
+Runs AFTER all audio processing plugins (which may create the duplicates):
+```
+7. vm_audio_transcode_create_stereo  ← may create duplicates
+8. vm_audio_remove_duplicates        ← NEW: removes duplicates
+9. vm_subtitles_transcode
+```
 
 ## Future Tasks / Considerations
 
