@@ -1,3 +1,6 @@
+**<span style="color:#56adda">0.3.3</span>** *(marcosviniciusi)*
+- FIX: Replaced BatchLogRecordProcessor with SimpleLogRecordProcessor for synchronous export (logs were not reaching the backend)
+
 **<span style="color:#56adda">0.3.2</span>** *(marcosviniciusi)*
 - FIX: Removed unsupported 'resource' parameter from LogRecord constructor (resource is set at LoggerProvider level)
 
