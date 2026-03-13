@@ -138,17 +138,17 @@ These plugins are called to test if files should be added to the pending task li
 8. vm_audio_remove_duplicates            ← Check if duplicate audio streams exist
 ```
 
-### Worker Process
+### Worker — Processing File
 
-Processing order when a file enters the pipeline:
+These plugins are called by a worker and produce a custom command to be executed:
 
 ```
-1. vm_video_transcoder              ← Transcode video to HEVC (priority 1)
-2. vm_audio_transcoder              ← Convert audio to EAC3 5.1 (priority 3)
-3. vm_audio_transcode_create_stereo ← Add stereo downmix track (priority 5)
-4. vm_audio_remove_duplicates       ← Remove duplicate audio streams (priority 6)
-5. vm_subtitles_transcode           ← Keep PT-BR subtitles only (priority 7)
-6. vm_tag_pipeline_complete         ← Write UNMANIC_FULL_PIPELINE=processed tag (priority 99)
+1. vm_video_transcoder              ← Transcode video to HEVC
+2. vm_audio_transcoder              ← Convert audio to EAC3 5.1
+3. vm_audio_transcode_create_stereo ← Add stereo downmix track
+4. vm_subtitles_transcode           ← Keep PT-BR subtitles only
+5. vm_audio_remove_duplicates       ← Remove duplicate audio streams
+6. vm_tag_pipeline_complete         ← Write UNMANIC_FULL_PIPELINE=processed tag (LAST)
 ```
 
 ### Post-Processor
