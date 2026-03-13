@@ -28,6 +28,7 @@ Repository ID: `repository.vinicima` (defined in `config.json`).
 
 | Dir / Plugin ID | Name | Version | Original Author |
 |---|---|---|---|
+| `ignore_files_recently_modified` | Ignore files recently modified | 0.0.2 | Josh.5 |
 | `vm_ignore_task_history` | Ignore - Task History | 0.0.3 | Josh.5 |
 | `vm_ignore_metadata_unmanic` | Ignore - Full Pipeline Completed | 0.0.3 | marcosviniciusi |
 | `vm_ignore_video_over_res` | Ignore - Video Over Resolution Limit | 0.0.4 | Josh.5 |
@@ -96,6 +97,7 @@ unmanic-plugins/
     │   ├── plugin.py
     │   ├── lib/ffmpeg/
     │   └── ...
+    ├── ignore_files_recently_modified/  # Filter: skip recently modified files
     ├── ignore_task_history/             # Filter: skip completed tasks
     ├── ignore_metadata_unmanic/        # Filter: skip processed metadata
     ├── ignore_video_over_res/          # Filter: skip high-res
@@ -117,6 +119,15 @@ unmanic-plugins/
 2. **Plugin hooks**: `on_library_management_file_test` (file scanning), `on_worker_process` (processing), `on_postprocessor_task_results` (after task completes)
 3. **Compatibility**: v1 (legacy) and/or v2 (current)
 4. **Settings**: Managed via `PluginSettings` class with `settings_dict` and `form_settings`
+5. **Every plugin directory MUST contain a `.gitignore` file** — the CI workflow (`plugin-repo-gen.yml`) checks for this and will fail if missing. Use the standard template from existing plugins (ignores `*.py[cod]`, `.idea/`, `.DS_Store`, `site-packages/**`)
+6. **Required files per plugin (checked by CI)**: `.gitignore`, `info.json`, `LICENSE`, `plugin.py`. Must NOT contain: `site-packages/`, `settings.json`
+
+## Unmanic Plugin Priority System
+
+- **Lower priority number = runs FIRST** (min-heap style: priority 1 runs before priority 10)
+- **Early exit behavior**: Once any plugin sets `add_file_to_pending_tasks = True` or requests ignore (`False`), subsequent file test plugins are **SKIPPED**
+- **Best practice**: Place broader filters (ignore plugins) BEFORE specific ones (processing detection) to leverage early exit
+- The UI-configured order in each library takes precedence over the `info.json` priority defaults
 
 ## Tasks Completed (2026-03-12)
 
@@ -339,17 +350,18 @@ the entire pipeline. This replaces relying on individual plugin tags for the "sh
 ### Pipeline order with new plugin
 
 ```
-1. vm_ignore_metadata_unmanic       ← checks UNMANIC_FULL_PIPELINE tag (priority 2)
-2. vm_ignore_task_history
-3. vm_ignore_video_over_res
-4. vm_ignore_video_under_res
-5. vm_video_transcoder              ← on_worker_process priority 1
-6. vm_audio_transcoder              ← on_worker_process priority 3
-7. vm_audio_transcode_create_stereo ← on_worker_process priority 5
-8. vm_audio_remove_duplicates       ← on_worker_process priority 6
-9. vm_subtitles_transcode           ← on_worker_process priority 7
-10. vm_tag_pipeline_complete        ← NEW: writes UNMANIC_FULL_PIPELINE=processed (priority 99)
-11. vm_postprocessor_otel_trace     ← post-processor
+1. ignore_files_recently_modified    ← skip files still being written/downloaded (priority 2)
+2. vm_ignore_metadata_unmanic        ← checks UNMANIC_FULL_PIPELINE tag (priority 2)
+3. vm_ignore_task_history
+4. vm_ignore_video_over_res
+5. vm_ignore_video_under_res
+6. vm_video_transcoder               ← on_worker_process priority 1
+7. vm_audio_transcoder               ← on_worker_process priority 3
+8. vm_audio_transcode_create_stereo  ← on_worker_process priority 5
+9. vm_audio_remove_duplicates        ← on_worker_process priority 6
+10. vm_subtitles_transcode           ← on_worker_process priority 7
+11. vm_tag_pipeline_complete         ← writes UNMANIC_FULL_PIPELINE=processed (priority 99)
+12. vm_postprocessor_otel_trace      ← post-processor
 ```
 
 ## Future Tasks / Considerations
