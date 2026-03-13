@@ -104,7 +104,7 @@ These plugins control which files enter the processing pipeline:
 Writes the **`UNMANIC_FULL_PIPELINE=processed`** metadata tag to mark files that have completed the entire processing pipeline. This plugin remuxes the file (copies all streams without re-encoding) and adds the tag at the format level.
 
 - **Must be the LAST processing step** in the pipeline
-- **Works with** `vm_ignore_metadata_unmanic` — which runs last among file test plugins (priority 999) and completely ignores files with this tag
+- **Works with** `vm_ignore_metadata_unmanic` — which runs last among file test plugins (priority 0) and completely ignores files with this tag
 - **No re-encoding**: All streams are copied untouched, only metadata is added
 
 ### Observability

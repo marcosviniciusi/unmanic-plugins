@@ -33,6 +33,6 @@ This must be the **last** processing plugin:
 
 ### Ignore plugin setup
 
-The **Ignore - Full Pipeline Completed** plugin (`vm_ignore_metadata_unmanic`) must be enabled with priority 999 (runs last among file test plugins). It checks for `UNMANIC_FULL_PIPELINE=processed` and completely blocks any file that has this tag from being added to the processing queue.
+The **Ignore - Full Pipeline Completed** plugin (`vm_ignore_metadata_unmanic`) must be enabled with priority 0 (runs last among file test plugins — in Unmanic, lower priority = runs later). It checks for `UNMANIC_FULL_PIPELINE=processed` and completely blocks any file that has this tag from being added to the processing queue.
 
 ---

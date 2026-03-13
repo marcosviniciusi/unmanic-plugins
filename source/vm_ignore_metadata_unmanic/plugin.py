@@ -90,7 +90,7 @@ def on_library_management_file_test(data):
 
     if check_file_has_pipeline_tag(abspath):
         # File already completed the full pipeline — IGNORE COMPLETELY
-        # This runs with high priority (last) so it overrides any other plugin's decision
+        # This runs with priority 0 (last) so it overrides any other plugin's decision
         data['add_file_to_pending_tasks'] = False
         logger.info("File has {}={} tag — full pipeline already completed. "
                      "IGNORING completely: '{}'".format(
