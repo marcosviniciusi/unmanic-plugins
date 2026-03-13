@@ -26,10 +26,10 @@ import re
 
 from unmanic.libs.unplugins.settings import PluginSettings
 
-from create_stereo_audio_clone.lib.ffmpeg import StreamMapper, Probe, Parser
+from audio_transcode_create_stereo.lib.ffmpeg import StreamMapper, Probe, Parser
 
 # Configure plugin logger
-logger = logging.getLogger("Unmanic.Plugin.create_stereo_audio_clone")
+logger = logging.getLogger("Unmanic.Plugin.audio_transcode_create_stereo")
 
 
 class Settings(PluginSettings):

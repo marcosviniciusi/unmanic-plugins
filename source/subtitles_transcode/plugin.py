@@ -14,9 +14,9 @@ import os
 
 from unmanic.libs.unplugins.settings import PluginSettings
 
-from equalize_subtitles_ptbr.lib.ffmpeg import StreamMapper, Probe, Parser
+from subtitles_transcode.lib.ffmpeg import StreamMapper, Probe, Parser
 
-logger = logging.getLogger("Unmanic.Plugin.equalize_subtitles_ptbr")
+logger = logging.getLogger("Unmanic.Plugin.subtitles_transcode")
 
 
 class Settings(PluginSettings):
