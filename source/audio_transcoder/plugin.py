@@ -28,10 +28,10 @@ import os
 
 from unmanic.libs.unplugins.settings import PluginSettings
 
-from dts_to_dd.lib.ffmpeg import StreamMapper, Probe, Parser
+from audio_transcoder.lib.ffmpeg import StreamMapper, Probe, Parser
 
 # Configure plugin logger
-logger = logging.getLogger("Unmanic.Plugin.dts_to_dd")
+logger = logging.getLogger("Unmanic.Plugin.audio_transcoder")
 
 
 class Settings(PluginSettings):
@@ -40,21 +40,23 @@ class Settings(PluginSettings):
         'remove_original': True,
     }
 
-    form_settings = {
-        "eac3_bitrate": {
-            "label":      "EAC3 5.1 bitrate",
-            "input_type": "select",
-            "select_options": [
-                {'value': "768k",  'label': "768 kbps (5.1 balanced)"},
-                {'value': "1024k", 'label': "1024 kbps (5.1 good)"},
-                {'value': "1536k", 'label': "1536 kbps (5.1 maximum, recommended)"},
-            ],
-        },
-        "remove_original": {
-            "label":      "Remove original stream after conversion (DTS, FLAC, Opus, Vorbis)",
-            "input_type": "checkbox",
-        },
-    }
+    def __init__(self, *args, **kwargs):
+        super(Settings, self).__init__(*args, **kwargs)
+        self.form_settings = {
+            "eac3_bitrate": {
+                "label":      "EAC3 5.1 bitrate",
+                "input_type": "select",
+                "select_options": [
+                    {'value': "768k",  'label': "768 kbps (5.1 balanced)"},
+                    {'value': "1024k", 'label': "1024 kbps (5.1 good)"},
+                    {'value': "1536k", 'label': "1536 kbps (5.1 maximum, recommended)"},
+                ],
+            },
+            "remove_original": {
+                "label":      "Remove original stream after conversion (DTS, FLAC, Opus, Vorbis)",
+                "input_type": "checkbox",
+            },
+        }
 
 
 class PluginStreamMapper(StreamMapper):

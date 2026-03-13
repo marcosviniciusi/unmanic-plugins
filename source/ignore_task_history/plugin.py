@@ -28,7 +28,7 @@ import os
 from unmanic.libs.unplugins.settings import PluginSettings
 
 # Configure plugin logger
-logger = logging.getLogger("Unmanic.Plugin.ignore_completed_tasks")
+logger = logging.getLogger("Unmanic.Plugin.ignore_task_history")
 
 
 class Settings(PluginSettings):

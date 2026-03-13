@@ -26,10 +26,10 @@ import logging
 
 from unmanic.libs.unplugins.settings import PluginSettings
 
-from ignore_video_file_over_resolution.lib.ffmpeg import Probe
+from ignore_video_over_res.lib.ffmpeg import Probe
 
 # Configure plugin logger
-logger = logging.getLogger("Unmanic.Plugin.ignore_video_file_over_resolution")
+logger = logging.getLogger("Unmanic.Plugin.ignore_video_over_res")
 
 default_resolutions = {
     '480p_sdtv':   {
