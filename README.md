@@ -123,19 +123,38 @@ Sends structured log records for every completed task to an **OpenTelemetry-comp
 
 For a fully equalized media library, configure the plugins in this order in Unmanic:
 
+### Library Management — File Test
+
+These plugins are called to test if files should be added to the pending task list:
+
 ```
-1. ignore_files_recently_modified   ← Skip files modified recently (still being written/downloaded)
-2. vm_ignore_task_history           ← Skip already-processed files
-3. vm_ignore_metadata_unmanic       ← Skip files tagged as fully processed
-4. vm_ignore_video_over_res         ← Optional: skip 4K if targeting 1080p
-5. vm_ignore_video_under_res        ← Optional: skip low-res files
-6. vm_video_transcoder              ← Transcode video to HEVC
-7. vm_audio_transcoder              ← Convert audio to EAC3 5.1
-8. vm_audio_transcode_create_stereo ← Add stereo downmix track
-9. vm_audio_remove_duplicates       ← Remove duplicate audio streams
-10. vm_subtitles_transcode          ← Keep PT-BR subtitles only
-11. vm_tag_pipeline_complete        ← Write UNMANIC_FULL_PIPELINE=processed tag (LAST)
-12. vm_postprocessor_otel_trace     ← Log results to OTEL backend
+1. ignore_files_recently_modified        ← Skip files still being written/downloaded
+2. Limit library search by file extension ← Only process files with specific extensions (built-in)
+3. vm_ignore_metadata_unmanic            ← Skip files tagged with UNMANIC_FULL_PIPELINE=processed
+4. vm_video_transcoder                   ← Check if video needs transcoding to HEVC
+5. vm_audio_transcoder                   ← Check if audio needs conversion to EAC3 5.1
+6. vm_audio_transcode_create_stereo      ← Check if surround streams need stereo downmix
+7. vm_subtitles_transcode                ← Check if non-PT-BR subtitles need removal
+8. vm_audio_remove_duplicates            ← Check if duplicate audio streams exist
+```
+
+### Worker Process
+
+Processing order when a file enters the pipeline:
+
+```
+1. vm_video_transcoder              ← Transcode video to HEVC (priority 1)
+2. vm_audio_transcoder              ← Convert audio to EAC3 5.1 (priority 3)
+3. vm_audio_transcode_create_stereo ← Add stereo downmix track (priority 5)
+4. vm_audio_remove_duplicates       ← Remove duplicate audio streams (priority 6)
+5. vm_subtitles_transcode           ← Keep PT-BR subtitles only (priority 7)
+6. vm_tag_pipeline_complete         ← Write UNMANIC_FULL_PIPELINE=processed tag (priority 99)
+```
+
+### Post-Processor
+
+```
+1. vm_postprocessor_otel_trace      ← Log task results to OTEL backend (SigNoz/Jaeger/Tempo)
 ```
 
 ## Installation
