@@ -11,7 +11,7 @@ Repository ID: `repository.vinicima` (defined in `config.json`).
 
 | Dir / Plugin ID | Name | Version | Original Author | Category |
 |---|---|---|---|---|
-| `vm_video_transcoder` | Video Transcoder - HW Accelerated with Metadata | 0.3.0 | Josh.5 | Video |
+| `vm_video_transcoder` | Video Transcoder - HW Accelerated with Metadata | 0.3.1 | Josh.5 | Video |
 | `vm_audio_transcoder` | Audio Transcoder - EAC3 5.1 (Dolby Digital Plus) | 1.1.0 | Josh.5 | Audio |
 | `vm_audio_transcode_create_stereo` | Audio Transcode Create Stereo - Surround Sound Downmix | 0.2.0 | Josh.5 | Audio |
 | `vm_audio_remove_duplicates` | Audio Remove Duplicates - Deduplicate Audio Streams | 0.1.0 | marcosviniciusi | Audio |
@@ -281,6 +281,42 @@ Runs AFTER all audio processing plugins (which may create the duplicates):
 8. vm_audio_remove_duplicates        ← NEW: removes duplicates
 9. vm_subtitles_transcode
 ```
+
+## Fix: Video Transcoder Reprocessing Bug (2026-03-13)
+
+### Root cause
+
+The `vm_video_transcoder` had 3 bugs causing reprocessing:
+
+1. **Metadata tag only written in `standard` mode** — `basic` and `advanced` modes never wrote `unmanic_status=processed`
+   - Location: `source/vm_video_transcoder/lib/plugin_stream_mapper.py` line 92 (`if mode == 'standard'`)
+   - Fix: Write tag in ALL modes (basic, standard, advanced)
+
+2. **Metadata check only when `force_transcode=True`** — Normal mode never checked the tag
+   - Location: `source/vm_video_transcoder/plugin.py` lines 240 and 299
+   - Fix: Check tag FIRST in `on_library_management_file_test` and `on_worker_process`, regardless of `force_transcode`
+
+3. **Smart filters override codec check** — `autocrop_black_bars` and `target_resolution` returned True
+   before the codec check, causing infinite reprocessing even on already-processed HEVC files
+   - Location: `source/vm_video_transcoder/lib/plugin_stream_mapper.py` lines 326-337
+   - This is now moot because the metadata check runs first and skips the file entirely
+
+### Fix approach
+
+**RULE: If `UNMANIC_STATUS=processed` tag exists, the file is NEVER processed. No exceptions. All modes, all engines.**
+
+- `on_library_management_file_test`: Check tag FIRST (before probe, before stream analysis). If found → return immediately
+- `on_worker_process`: Check tag FIRST. If found → return immediately (no exec_command)
+- `set_default_values` (plugin_stream_mapper.py): Write `-metadata unmanic_status=processed` in ALL modes, not just standard
+
+### Files modified
+
+| File | Changes |
+|------|---------|
+| `source/vm_video_transcoder/plugin.py` | Move metadata check to top, remove `force_transcode` condition |
+| `source/vm_video_transcoder/lib/plugin_stream_mapper.py` | Write metadata tag in all modes |
+| `source/vm_video_transcoder/info.json` | Bump version |
+| `source/vm_video_transcoder/changelog.md` | Add entry |
 
 ## Future Tasks / Considerations
 

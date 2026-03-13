@@ -74,6 +74,10 @@ class PluginStreamMapper(StreamMapper):
             )
         )
 
+        # Add metadata tag in ALL modes to prevent reprocessing
+        self.set_ffmpeg_advanced_options(**{'-metadata': 'unmanic_status=processed'})
+        tools.append_worker_log(self.worker_log, "Adding metadata tag 'unmanic_status=processed'")
+
         # Build default options of advanced mode
         if self.settings.get_setting('mode') == 'advanced':
             # If any main options are provided, overwrite them
@@ -91,16 +95,12 @@ class PluginStreamMapper(StreamMapper):
         # Build default options of standard mode
         if self.settings.get_setting('mode') == 'standard':
 
-            # Set max muxing queue size and metadata
+            # Set max muxing queue size
             advanced_kwargs = {}
             if self.settings.get_setting('max_muxing_queue_size'):
                 advanced_kwargs['-max_muxing_queue_size'] = str(self.settings.get_setting('max_muxing_queue_size'))
-            
-            # Add metadata tag automatically
-            advanced_kwargs['-metadata'] = 'unmanic_status=processed'
-            
+
             self.set_ffmpeg_advanced_options(**advanced_kwargs)
-            tools.append_worker_log(self.worker_log, "Adding metadata tag 'unmanic_status=processed'")
 
         # Check for config specific settings in modes that expose smart filters
         if self.settings.get_setting('mode') in ['basic', 'standard']:
