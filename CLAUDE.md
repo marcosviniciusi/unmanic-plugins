@@ -127,7 +127,7 @@ unmanic-plugins/
 - [x] Created `CLAUDE.md` documentation
 - [x] Created `postprocessor_otel_trace` plugin for OpenTelemetry task tracing (SigNoz/Jaeger/Tempo)
 
-## In Progress: Audio Plugin Anti-Reprocessing (2026-03-13)
+## Completed: Audio Plugin Anti-Reprocessing (2026-03-13)
 
 ### Context
 
@@ -171,6 +171,42 @@ so it's written to the output file at format level.
   - `source/vm_audio_transcode_create_stereo/plugin.py` — add tag check in `on_library_management_file_test`, add tag writing in `on_worker_process`
   - `source/vm_audio_transcode_create_stereo/lib/ffmpeg/stream_mapper.py` — potentially no changes needed (tag goes in advanced_options, not stream_encoding)
 
+### Stereo stream title fix
+
+Current `generate_audio_stream_tag` produces generic titles like `EAC3 5.1 [Stereo]` which are confusing.
+New title format should reflect the REAL output specs:
+- **Title**: `{Language} {CODEC} stereo (Padrão)` — e.g., `Korean AAC stereo (Padrão)`
+- **Specs shown by player**: `AAC Stereo / Advanced Audio Codec / 2.0 / 48 kHz / 128 kbps`
+- Language comes from source stream's `tags.language`
+- Codec comes from the configured encoder setting (aac/ac3)
+- "stereo" and "(Padrão)" are fixed text
+
+### FFmpeg command structure (single command does everything)
+
+```
+ffmpeg -hide_banner -loglevel info
+  -i input.mkv
+  -strict -2 -max_muxing_queue_size 4096
+  -metadata unmanic_stereo=processed          ← format-level tag (in advanced_options)
+  -map 0:v:0 -c:v:0 copy                     ← copy video
+  -map 0:a:0 -c:a:0 copy                     ← copy surround original
+  -map 0:a:0 -c:a:1 aac -ac 2                ← create stereo downmix
+  -metadata:s:a:1 title="Korean AAC stereo (Padrão)"  ← stream-level title
+  -metadata:s:a:1 language=kor                ← stream-level language
+  -y output.mkv
+```
+
+### Files to modify
+
+| File | Changes |
+|------|---------|
+| `source/vm_audio_transcode_create_stereo/plugin.py` | 3-layer check, tag writing, new title format |
+| `source/vm_audio_transcode_create_stereo/info.json` | Bump version to 0.2.0 |
+| `source/vm_audio_transcode_create_stereo/changelog.md` | Add 0.2.0 entry |
+| `source/vm_audio_transcode_create_stereo/description.md` | Update description if needed |
+| `README.md` | Update stereo plugin description |
+| `CLAUDE.md` | Document completed work |
+
 ### Also consider for `vm_audio_transcoder`
 
 - Same pattern could be applied: write `unmanic_audio=processed` tag and check it first.
@@ -178,7 +214,7 @@ so it's written to the output file at format level.
 
 ## Future Tasks / Considerations
 
-- [ ] Implement anti-reprocessing tag for `vm_audio_transcode_create_stereo` (see section above)
+- [x] Implement anti-reprocessing tag for `vm_audio_transcode_create_stereo` (v0.2.0)
 - [ ] Consider same pattern for `vm_audio_transcoder`
 - [ ] Update `config.json` repository ID if needed (currently `repository.vinicima`)
 - [ ] Add icons for plugins that are missing them (e.g., `subtitles_transcode`)

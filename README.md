@@ -60,6 +60,12 @@ Converts incompatible audio codecs to **EAC3 5.1 (Dolby Digital Plus)**:
 
 Creates a **stereo clone** of surround sound audio streams for devices that don't support multichannel audio (phones, laptops, Bluetooth headphones). The original surround track is preserved alongside the new stereo track.
 
+- **Anti-reprocessing**: 3-layer check prevents duplicate processing:
+  1. Format-level metadata tag (`UNMANIC_STEREO=processed`) — fastest skip
+  2. Channel count + language analysis — detects existing stereo in same language
+  3. Codec + channels detection — detects existing encoder match with 2 channels
+- **Descriptive titles**: Stereo tracks are titled with real output specs (e.g., `Korean AAC stereo (Padrão)`) instead of generic `[Stereo]` tags
+
 ### Subtitle Processing
 
 #### `vm_subtitles_transcode` — Keep PT-BR Subtitles Only
