@@ -158,6 +158,13 @@ Installed automatically by Unmanic from `requirements.txt`:
 - `opentelemetry-sdk >= 1.20.0`
 - `opentelemetry-exporter-otlp-proto-http >= 1.20.0`
 
+## Fixes (v0.3.1 - v0.3.4)
+
+- **v0.3.1**: Fixed `'Logger' object has no attribute '_logger'` error — replaced internal SDK API call with direct `LogRecord` construction
+- **v0.3.2**: Removed unsupported `resource` parameter from `LogRecord` constructor (resource is set at `LoggerProvider` level)
+- **v0.3.3**: Replaced `BatchLogRecordProcessor` with `SimpleLogRecordProcessor` for synchronous export (logs were not reaching the backend)
+- **v0.3.4**: Updated hardcoded `service.version` and `scope_version` to match current plugin version
+
 ## Limitations
 
 The Unmanic `on_postprocessor_task_results` hook provides only the **overall task result** (success/failed). It does **NOT** provide:

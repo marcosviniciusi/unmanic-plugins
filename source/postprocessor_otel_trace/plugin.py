@@ -263,7 +263,7 @@ def _send_log(settings, data):
 
     resource = Resource.create({
         'service.name':             service_name,
-        'service.version':          '0.3.0',
+        'service.version':          '0.3.4',
         'deployment.environment':   environment,
         'host.name':                hostname,
     })
@@ -277,7 +277,7 @@ def _send_log(settings, data):
     log_provider.add_log_record_processor(SimpleLogRecordProcessor(exporter))
     set_logger_provider(log_provider)
 
-    otel_logger = log_provider.get_logger('unmanic.postprocessor_otel_trace', '0.3.0')
+    otel_logger = log_provider.get_logger('unmanic.postprocessor_otel_trace', '0.3.4')
 
     task_log = _build_task_log(settings, data)
     task_success = data.get('task_processing_success', False)
