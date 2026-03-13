@@ -242,7 +242,7 @@ def _send_log(settings, data):
         from opentelemetry.sdk._logs import LoggerProvider
         from opentelemetry.sdk._logs.export import BatchLogRecordProcessor
         from opentelemetry.exporter.otlp.proto.http._log_exporter import OTLPLogExporter
-        from opentelemetry._logs import set_logger_provider, SeverityNumber
+        from opentelemetry._logs import set_logger_provider, SeverityNumber, LogRecord
     except ImportError as e:
         logger.error(
             "OpenTelemetry packages not installed. "
@@ -286,22 +286,26 @@ def _send_log(settings, data):
 
     log_body = json.dumps(task_log, ensure_ascii=False, default=str)
 
-    otel_logger.emit(
-        otel_logger._logger.create_log_record(
-            body=log_body,
-            severity_number=severity,
-            severity_text=severity_text,
-            attributes={
-                'unmanic.processed':        task_log['unmanic_processed'],
-                'unmanic.task.id':          str(task_log['task']['id']),
-                'unmanic.task.basename':    task_log['task']['basename'],
-                'unmanic.source.path':      task_log['source']['path'],
-                'unmanic.task.duration_s':  task_log['task']['duration_seconds'],
-                'unmanic.destination.count': task_log['destination']['count'],
-                'log.type':                 'unmanic_task_result',
-            },
-        )
+    import time
+
+    record = LogRecord(
+        timestamp=int(time.time_ns()),
+        body=log_body,
+        severity_number=severity,
+        severity_text=severity_text,
+        attributes={
+            'unmanic.processed':        task_log['unmanic_processed'],
+            'unmanic.task.id':          str(task_log['task']['id']),
+            'unmanic.task.basename':    task_log['task']['basename'],
+            'unmanic.source.path':      task_log['source']['path'],
+            'unmanic.task.duration_s':  task_log['task']['duration_seconds'],
+            'unmanic.destination.count': task_log['destination']['count'],
+            'log.type':                 'unmanic_task_result',
+        },
+        resource=resource,
     )
+
+    otel_logger.emit(record)
 
     log_provider.force_flush()
     log_provider.shutdown()

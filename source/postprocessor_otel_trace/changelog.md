@@ -1,3 +1,6 @@
+**<span style="color:#56adda">0.3.1</span>** *(marcosviniciusi)*
+- FIX: Fixed "'Logger' object has no attribute '_logger'" error by using LogRecord directly instead of internal API
+
 **<span style="color:#56adda">0.3.0</span>** *(marcosviniciusi)*
 - CHANGED: Moved basename from source to task object for better search/filtering
 - NEW: Configurable hostname setting (override auto-detected hostname)
