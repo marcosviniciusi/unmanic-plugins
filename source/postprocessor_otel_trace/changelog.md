@@ -1,3 +1,6 @@
+**<span style="color:#56adda">0.3.4</span>** *(marcosviniciusi)*
+- FIX: Updated service.version and scope_version from hardcoded 0.3.0 to 0.3.4
+
 **<span style="color:#56adda">0.3.3</span>** *(marcosviniciusi)*
 - FIX: Replaced BatchLogRecordProcessor with SimpleLogRecordProcessor for synchronous export (logs were not reaching the backend)
 
