@@ -11,25 +11,25 @@ Repository ID: `repository.vinicima` (defined in `config.json`).
 
 | Dir / Plugin ID | Name | Version | Original Author | Category |
 |---|---|---|---|---|
-| `video_transcoder` | Video Transcoder - HW Accelerated with Metadata | 0.3.0 | Josh.5 | Video |
-| `audio_transcoder` | Audio Transcoder - EAC3 5.1 (Dolby Digital Plus) | 1.1.0 | Josh.5 | Audio |
-| `audio_transcode_create_stereo` | Audio Transcode Create Stereo - Surround Sound Downmix | 0.1.1 | Josh.5 | Audio |
-| `subtitles_transcode` | Subtitles Transcode - Keep PT-BR Only | 3.4.0 | marcosviniciusi | Subtitle |
+| `vm_video_transcoder` | Video Transcoder - HW Accelerated with Metadata | 0.3.0 | Josh.5 | Video |
+| `vm_audio_transcoder` | Audio Transcoder - EAC3 5.1 (Dolby Digital Plus) | 1.1.0 | Josh.5 | Audio |
+| `vm_audio_transcode_create_stereo` | Audio Transcode Create Stereo - Surround Sound Downmix | 0.1.1 | Josh.5 | Audio |
+| `vm_subtitles_transcode` | Subtitles Transcode - Keep PT-BR Only | 3.4.0 | marcosviniciusi | Subtitle |
 
 ### Post-Processor Plugins
 
 | Dir / Plugin ID | Name | Version | Original Author | Category |
 |---|---|---|---|---|
-| `postprocessor_otel_trace` | Post-Processor - OpenTelemetry Task Log | 0.2.0 | marcosviniciusi | Observability |
+| `vm_postprocessor_otel_trace` | Post-Processor - OpenTelemetry Task Log | 0.2.0 | marcosviniciusi | Observability |
 
 ### Filter / Ignore Plugins
 
 | Dir / Plugin ID | Name | Version | Original Author |
 |---|---|---|---|
-| `ignore_task_history` | Ignore - Task History | 0.0.3 | Josh.5 |
-| `ignore_metadata_unmanic` | Ignore - Metadata Processed | 0.0.2 | marcosviniciusi |
-| `ignore_video_over_res` | Ignore - Video Over Resolution Limit | 0.0.4 | Josh.5 |
-| `ignore_video_under_res` | Ignore - Video Under Resolution Limit | 0.0.4 | Josh.5 |
+| `vm_ignore_task_history` | Ignore - Task History | 0.0.3 | Josh.5 |
+| `vm_ignore_metadata_unmanic` | Ignore - Metadata Processed | 0.0.2 | marcosviniciusi |
+| `vm_ignore_video_over_res` | Ignore - Video Over Resolution Limit | 0.0.4 | Josh.5 |
+| `vm_ignore_video_under_res` | Ignore - Video Under Resolution Limit | 0.0.4 | Josh.5 |
 
 ## Naming Convention
 
@@ -47,14 +47,14 @@ Plugin IDs follow this pattern to avoid conflicts with the official Unmanic repo
 
 | Previous ID | Previous Dir | New ID / Dir |
 |---|---|---|
-| `dts_to_dd` | `audio_to_EAC3` | `audio_transcoder` |
-| `create_stereo_audio_clone` | `create_stereo_audio_clone` | `audio_transcode_create_stereo` |
-| `equalize_subtitles_ptbr` | `equalize_subtitles_ptbr` | `subtitles_transcode` |
-| `video_transcoder` | `video_transcoder` | `video_transcoder` (unchanged) |
-| `ignore_completed_tasks` | `ignore_completed_tasks` | `ignore_task_history` |
-| `ignore_metadata_unmanic` | `ignore_metadata_unmanic` | `ignore_metadata_unmanic` (unchanged) |
-| `ignore_video_file_over_resolution` | `ignore_video_file_over_resolution` | `ignore_video_over_res` |
-| `ignore_video_file_under_resolution` | `ignore_video_file_under_resolution` | `ignore_video_under_res` |
+| `dts_to_dd` | `audio_to_EAC3` | `vm_audio_transcoder` |
+| `create_stereo_audio_clone` | `create_stereo_audio_clone` | `vm_audio_transcode_create_stereo` |
+| `equalize_subtitles_ptbr` | `equalize_subtitles_ptbr` | `vm_subtitles_transcode` |
+| `vm_video_transcoder` | `vm_video_transcoder` | `vm_video_transcoder` (unchanged) |
+| `ignore_completed_tasks` | `ignore_completed_tasks` | `vm_ignore_task_history` |
+| `vm_ignore_metadata_unmanic` | `vm_ignore_metadata_unmanic` | `vm_ignore_metadata_unmanic` (unchanged) |
+| `ignore_video_file_over_resolution` | `ignore_video_file_over_resolution` | `vm_ignore_video_over_res` |
+| `ignore_video_file_under_resolution` | `ignore_video_file_under_resolution` | `vm_ignore_video_under_res` |
 
 ## Project Structure
 
