@@ -25,6 +25,7 @@ import datetime
 import json
 import logging
 import os
+import time
 
 from unmanic.libs.unplugins.settings import PluginSettings
 
@@ -240,7 +241,7 @@ def _send_log(settings, data):
     try:
         from opentelemetry.sdk.resources import Resource
         from opentelemetry.sdk._logs import LoggerProvider
-        from opentelemetry.sdk._logs.export import BatchLogRecordProcessor
+        from opentelemetry.sdk._logs.export import SimpleLogRecordProcessor
         from opentelemetry.exporter.otlp.proto.http._log_exporter import OTLPLogExporter
         from opentelemetry._logs import set_logger_provider, SeverityNumber, LogRecord
     except ImportError as e:
@@ -273,7 +274,7 @@ def _send_log(settings, data):
     )
 
     log_provider = LoggerProvider(resource=resource)
-    log_provider.add_log_record_processor(BatchLogRecordProcessor(exporter))
+    log_provider.add_log_record_processor(SimpleLogRecordProcessor(exporter))
     set_logger_provider(log_provider)
 
     otel_logger = log_provider.get_logger('unmanic.postprocessor_otel_trace', '0.3.0')
@@ -285,8 +286,6 @@ def _send_log(settings, data):
     severity_text = "INFO" if task_success else "ERROR"
 
     log_body = json.dumps(task_log, ensure_ascii=False, default=str)
-
-    import time
 
     record = LogRecord(
         timestamp=int(time.time_ns()),
