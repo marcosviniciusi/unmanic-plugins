@@ -74,10 +74,6 @@ class PluginStreamMapper(StreamMapper):
             )
         )
 
-        # Add metadata tag in ALL modes to prevent reprocessing
-        self.set_ffmpeg_advanced_options(**{'-metadata': 'unmanic_status=processed'})
-        tools.append_worker_log(self.worker_log, "Adding metadata tag 'unmanic_status=processed'")
-
         # Build default options of advanced mode
         if self.settings.get_setting('mode') == 'advanced':
             # If any main options are provided, overwrite them
@@ -89,6 +85,9 @@ class PluginStreamMapper(StreamMapper):
             if advanced_options:
                 # Overwrite all advanced options
                 self.advanced_options = advanced_options
+            # Add metadata tag AFTER overwrite so it's never lost
+            self.set_ffmpeg_advanced_options(**{'-metadata': 'unmanic_status=processed'})
+            tools.append_worker_log(self.worker_log, "Adding metadata tag 'unmanic_status=processed'")
             # Don't apply any other settings
             return
 
@@ -119,6 +118,10 @@ class PluginStreamMapper(StreamMapper):
             generic_kwargs, advanced_kwargs = encoder_lib.generate_default_args()
             self.set_ffmpeg_generic_options(**generic_kwargs)
             self.set_ffmpeg_advanced_options(**advanced_kwargs)
+
+        # Add metadata tag LAST for basic/standard modes so no encoder can overwrite it
+        self.set_ffmpeg_advanced_options(**{'-metadata': 'unmanic_status=processed'})
+        tools.append_worker_log(self.worker_log, "Adding metadata tag 'unmanic_status=processed'")
 
     def enable_execution_stage(self):
         """
