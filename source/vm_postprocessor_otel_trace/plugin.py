@@ -22,9 +22,11 @@ does not expose them at the post-processor stage.
 """
 
 import datetime
+import hashlib
 import json
 import logging
 import os
+import tempfile
 import time
 
 from unmanic.libs.unplugins.settings import PluginSettings
@@ -96,6 +98,45 @@ class Settings(PluginSettings):
             'input_type':  'checkbox',
         },
     }
+
+
+def _get_source_size_cache_dir():
+    """Return the temp directory used to cache source file sizes."""
+    cache_dir = os.path.join(tempfile.gettempdir(), 'unmanic_otel_source_sizes')
+    os.makedirs(cache_dir, exist_ok=True)
+    return cache_dir
+
+
+def _source_size_cache_path(abspath):
+    """Return the cache file path for a given source file."""
+    key = hashlib.md5(abspath.encode('utf-8')).hexdigest()
+    return os.path.join(_get_source_size_cache_dir(), key + '.json')
+
+
+def _save_source_size(abspath):
+    """Save the source file size to a temp cache file (called during worker process)."""
+    try:
+        size = os.path.getsize(abspath)
+        cache_file = _source_size_cache_path(abspath)
+        with open(cache_file, 'w') as f:
+            json.dump({'abspath': abspath, 'size': size}, f)
+        logger.debug("Saved source size %d for '%s'", size, abspath)
+    except (OSError, TypeError) as e:
+        logger.warning("Could not save source size for '%s': %s", abspath, e)
+
+
+def _read_source_size(abspath):
+    """Read the cached source file size. Returns size in bytes or 0 if not found."""
+    try:
+        cache_file = _source_size_cache_path(abspath)
+        if os.path.exists(cache_file):
+            with open(cache_file, 'r') as f:
+                data = json.load(f)
+            os.remove(cache_file)
+            return data.get('size', 0)
+    except (OSError, ValueError, TypeError) as e:
+        logger.warning("Could not read cached source size for '%s': %s", abspath, e)
+    return 0
 
 
 def _build_endpoint(settings):
@@ -180,7 +221,11 @@ def _build_task_log(settings, data):
 
     source_path = source_data.get('abspath', source_data.get('basename', 'unknown'))
     source_basename = os.path.basename(source_path) if source_path else 'unknown'
-    source_size = _get_file_size(source_path)
+    # Read the source size from cache (saved during worker process, before file was replaced)
+    source_size = _read_source_size(source_path) if source_path else 0
+    if not source_size:
+        # Fallback: read from disk (may be inaccurate if file was already replaced)
+        source_size = _get_file_size(source_path)
 
     duration_s = (finish_time - start_time) if (start_time and finish_time) else 0
 
@@ -263,7 +308,7 @@ def _send_log(settings, data):
 
     resource = Resource.create({
         'service.name':             service_name,
-        'service.version':          '0.3.4',
+        'service.version':          '0.4.0',
         'deployment.environment':   environment,
         'host.name':                hostname,
     })
@@ -277,7 +322,7 @@ def _send_log(settings, data):
     log_provider.add_log_record_processor(SimpleLogRecordProcessor(exporter))
     set_logger_provider(log_provider)
 
-    otel_logger = log_provider.get_logger('unmanic.postprocessor_otel_trace', '0.3.4')
+    otel_logger = log_provider.get_logger('unmanic.postprocessor_otel_trace', '0.4.0')
 
     task_log = _build_task_log(settings, data)
     task_success = data.get('task_processing_success', False)
@@ -315,6 +360,25 @@ def _send_log(settings, data):
         task_log['task']['duration_human'],
         endpoint,
     )
+
+
+def on_worker_process(data):
+    """
+    Runner function - called during the worker process stage.
+
+    Used here ONLY to capture the original source file size before processing,
+    so that the post-processor can report the correct source vs destination sizes.
+
+    The 'data' object argument includes:
+        original_file_path  - String, the original file path.
+        exec_command        - A command that Unmanic will run (not modified here).
+
+    :param data:
+    :return:
+    """
+    original_file_path = data.get('original_file_path')
+    if original_file_path:
+        _save_source_size(original_file_path)
 
 
 def on_postprocessor_task_results(data):

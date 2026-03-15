@@ -1,3 +1,8 @@
+**<span style="color:#56adda">0.4.0</span>** *(marcosviniciusi)*
+- FIX: Source file size now correctly reports the original size before processing (was showing same size as destination)
+- NEW: Added on_worker_process hook to capture original source file size before transcoding replaces the file
+- Uses temp cache file (MD5-keyed) to pass source size from worker to post-processor stage
+
 **<span style="color:#56adda">0.3.4</span>** *(marcosviniciusi)*
 - FIX: Updated service.version and scope_version from hardcoded 0.3.0 to 0.3.4
 
