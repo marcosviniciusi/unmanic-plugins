@@ -1,0 +1,19 @@
+{
+    "author": "marcosviniciusi",
+    "compatibility": [
+        2
+    ],
+    "description": "Send completed task logs to an OpenTelemetry-compatible backend (SigNoz, Jaeger, Grafana Tempo) via OTLP HTTP. Logs task status (success/failed), full file path, and duration.",
+    "icon": "",
+    "id": "vm_postprocessor_otel_trace",
+    "name": "Post-Processor - OpenTelemetry Task Log",
+    "platform": [
+        "all"
+    ],
+    "priorities": {
+        "on_worker_process": 0,
+        "on_postprocessor_task_results": 0
+    },
+    "tags": "postprocessor,opentelemetry,otel,signoz,observability,logging",
+    "version": "0.4.0"
+}
