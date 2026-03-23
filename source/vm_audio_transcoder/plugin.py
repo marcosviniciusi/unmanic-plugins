@@ -23,8 +23,10 @@
         If not, see <https://www.gnu.org/licenses/>.
 
 """
+import json
 import logging
 import os
+import subprocess
 
 from unmanic.libs.unplugins.settings import PluginSettings
 
@@ -32,6 +34,26 @@ from vm_audio_transcoder.lib.ffmpeg import StreamMapper, Probe, Parser
 
 # Configure plugin logger
 logger = logging.getLogger("Unmanic.Plugin.vm_audio_transcoder")
+
+METADATA_TAG_KEY = 'UNMANIC_DOLBY'
+METADATA_TAG_VALUE = 'processed'
+
+
+def check_file_has_audio_tag(path):
+    """Check if file has UNMANIC_DOLBY=processed format-level metadata tag."""
+    try:
+        result = subprocess.run(
+            ['ffprobe', '-v', 'quiet', '-print_format', 'json', '-show_format', path],
+            capture_output=True, text=True, timeout=30)
+        if result.returncode != 0:
+            return False
+        probe_data = json.loads(result.stdout)
+        for key, value in probe_data.get('format', {}).get('tags', {}).items():
+            if key.upper() == METADATA_TAG_KEY and value == METADATA_TAG_VALUE:
+                return True
+        return False
+    except Exception:
+        return False
 
 
 class Settings(PluginSettings):
@@ -142,6 +164,12 @@ def on_library_management_file_test(data):
     """
     abspath = data.get('path')
 
+    # Check metadata tag first — skip if already processed
+    if check_file_has_audio_tag(abspath):
+        logger.debug("File '{}' already has {}={} tag. Skipping.".format(
+            abspath, METADATA_TAG_KEY, METADATA_TAG_VALUE))
+        return data
+
     probe = Probe(logger, allowed_mimetypes=['audio', 'video'])
     if not probe.file(abspath):
         return data
@@ -189,6 +217,12 @@ def on_worker_process(data):
 
     abspath = data.get('file_in')
 
+    # Check metadata tag first — skip if already processed
+    if check_file_has_audio_tag(abspath):
+        logger.info("[WORKER] Already has {}={} tag, skipping: {}".format(
+            METADATA_TAG_KEY, METADATA_TAG_VALUE, abspath))
+        return data
+
     probe = Probe(logger, allowed_mimetypes=['audio', 'video'])
     if not probe.file(abspath):
         return data
@@ -211,6 +245,9 @@ def on_worker_process(data):
         mapper.set_output_file("{}{}".format(split_file_out[0], split_file_in[1]))
 
         ffmpeg_args = mapper.get_ffmpeg_args()
+
+        # Inject metadata tag before the output file (last 2 args are -y output)
+        ffmpeg_args = ffmpeg_args[:-2] + ['-metadata', 'unmanic_dolby=processed'] + ffmpeg_args[-2:]
 
         data['exec_command'] = ['ffmpeg'] + ffmpeg_args
         data['ffmpeg_args']  = ffmpeg_args

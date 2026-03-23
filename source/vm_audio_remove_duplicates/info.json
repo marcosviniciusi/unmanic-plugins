@@ -16,5 +16,5 @@
         "on_worker_process": 6
     },
     "tags": "audio,ffmpeg,duplicates,cleanup,library file test",
-    "version": "0.1.0"
+    "version": "0.1.1"
 }

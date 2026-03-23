@@ -188,6 +188,12 @@ def on_worker_process(data):
 
     abspath = data.get('file_in')
 
+    # Check metadata tag first — skip if already processed
+    if check_file_has_tag(abspath):
+        logger.info("[WORKER] Already has {}={} tag, skipping: {}".format(
+            METADATA_TAG_KEY, METADATA_TAG_VALUE, abspath))
+        return data
+
     # Probe the file
     probe = Probe(logger, allowed_mimetypes=['audio', 'video'])
     if not probe.file(abspath):

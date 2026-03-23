@@ -114,11 +114,35 @@ def on_library_management_file_test(data):
 
 # --- Worker process ---
 
+def _check_already_processed(path):
+    """Check if file has unmanic-equalize-subtitles-v2 tag."""
+    try:
+        import subprocess, json as _json
+        result = subprocess.run(
+            ['ffprobe', '-v', 'quiet', '-print_format', 'json', '-show_format', path],
+            capture_output=True, text=True, timeout=30)
+        if result.returncode != 0:
+            return False
+        probe_data = _json.loads(result.stdout)
+        for k, v in probe_data.get('format', {}).get('tags', {}).items():
+            if k.lower() in ('unmanic-equalize-subtitles-v2', 'unmanic_equalize_subtitles_v2'):
+                if str(v).lower() in ('true', '1', 'yes'):
+                    return True
+        return False
+    except Exception:
+        return False
+
+
 def on_worker_process(data):
     data['exec_command'] = []
     data['repeat'] = False
 
     abspath = data.get('file_in')
+
+    # Check metadata tag first — skip if already processed
+    if _check_already_processed(abspath):
+        logger.info("[WORKER] Already processed (tag found), skipping: %s", abspath)
+        return data
 
     probe = Probe(logger, allowed_mimetypes=['video'])
     if not probe.file(abspath):

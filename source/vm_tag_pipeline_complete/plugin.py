@@ -21,8 +21,10 @@
         If not, see <https://www.gnu.org/licenses/>.
 
 """
+import json
 import logging
 import os
+import subprocess
 
 from vm_tag_pipeline_complete.lib.ffmpeg import Probe, Parser
 
@@ -31,6 +33,23 @@ logger = logging.getLogger("Unmanic.Plugin.vm_tag_pipeline_complete")
 
 METADATA_TAG_KEY = 'UNMANIC_FULL_PIPELINE_V2'
 METADATA_TAG_VALUE = 'processed'
+
+
+def check_file_has_pipeline_tag(path):
+    """Check if file has UNMANIC_FULL_PIPELINE_V2=processed format-level metadata tag."""
+    try:
+        result = subprocess.run(
+            ['ffprobe', '-v', 'quiet', '-print_format', 'json', '-show_format', path],
+            capture_output=True, text=True, timeout=30)
+        if result.returncode != 0:
+            return False
+        probe_data = json.loads(result.stdout)
+        for key, value in probe_data.get('format', {}).get('tags', {}).items():
+            if key.upper() == METADATA_TAG_KEY and value == METADATA_TAG_VALUE:
+                return True
+        return False
+    except Exception:
+        return False
 
 
 def on_worker_process(data):
@@ -52,6 +71,12 @@ def on_worker_process(data):
     data['repeat'] = False
 
     abspath = data.get('file_in')
+
+    # Check metadata tag first — skip if already processed
+    if check_file_has_pipeline_tag(abspath):
+        logger.info("[WORKER] Already has {}={} tag, skipping: {}".format(
+            METADATA_TAG_KEY, METADATA_TAG_VALUE, abspath))
+        return data
 
     # Probe the file to validate it's a media file
     probe = Probe(logger, allowed_mimetypes=['audio', 'video'])
