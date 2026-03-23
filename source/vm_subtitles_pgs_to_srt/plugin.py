@@ -40,11 +40,31 @@ class Settings(PluginSettings):
 def _has_pgsrip():
     """Check if pgsrip and tesseract are available."""
     try:
-        import pgsrip  # noqa: F401
+        # Fix: other Unmanic plugins (e.g., otel) may bundle an old
+        # importlib_metadata backport in their site-packages that overrides
+        # the stdlib importlib.metadata and breaks pgsrip's metadata lookup
+        # (KeyError: 'home_page'). Clean up before importing pgsrip.
+        import sys
+        # Remove otel plugin's site-packages from sys.path
+        clean_path = [p for p in sys.path if '/vm_postprocessor_otel_trace/' not in p]
+        original_path = sys.path[:]
+        sys.path = clean_path
+        # Remove stale importlib_metadata from sys.modules if loaded from wrong path
+        stale_modules = [k for k in sys.modules
+                         if 'importlib_metadata' in k
+                         and hasattr(sys.modules[k], '__file__')
+                         and sys.modules[k].__file__
+                         and 'vm_postprocessor_otel_trace' in str(sys.modules[k].__file__)]
+        for mod in stale_modules:
+            del sys.modules[mod]
+        try:
+            import pgsrip  # noqa: F401
+        finally:
+            sys.path = original_path
         if shutil.which('tesseract') is None:
             return False
         return True
-    except ImportError:
+    except (ImportError, KeyError):
         return False
 
 

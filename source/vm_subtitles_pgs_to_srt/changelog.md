@@ -1,3 +1,6 @@
+**<span style="color:#56adda">0.1.2</span>** *(marcosviniciusi)* - Fix importlib_metadata conflict with otel plugin
+- FIX: pgsrip import fails with KeyError 'home_page' when vm_postprocessor_otel_trace bundles old importlib_metadata in its site-packages. Clean up sys.path and sys.modules before importing pgsrip.
+
 **<span style="color:#56adda">0.1.1</span>** *(marcosviniciusi)* - Fix missing lib files
 - FIX: Added missing mimetype_overrides.py and tools.py to lib/ffmpeg (plugin failed to load without them)
 
