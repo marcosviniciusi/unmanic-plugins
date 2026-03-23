@@ -12,5 +12,5 @@
         "on_worker_process": 50
     },
     "tags": "subtitle,ocr,pgs,srt,ffmpeg,library file test",
-    "version": "0.1.2"
+    "version": "0.1.3"
 }

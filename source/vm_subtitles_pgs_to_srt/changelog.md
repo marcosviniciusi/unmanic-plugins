@@ -1,3 +1,6 @@
+**<span style="color:#56adda">0.1.3</span>** *(marcosviniciusi)* - Fix PATH for macOS Homebrew
+- FIX: Add /opt/homebrew/bin and /usr/local/bin to PATH at module load. Fixes mkvextract/tesseract not found on macOS when Unmanic runs with minimal PATH.
+
 **<span style="color:#56adda">0.1.2</span>** *(marcosviniciusi)* - Fix importlib_metadata conflict with otel plugin
 - FIX: pgsrip import fails with KeyError 'home_page' when vm_postprocessor_otel_trace bundles old importlib_metadata in its site-packages. Clean up sys.path and sys.modules before importing pgsrip.
 

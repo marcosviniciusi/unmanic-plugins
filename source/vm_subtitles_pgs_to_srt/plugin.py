@@ -37,6 +37,21 @@ class Settings(PluginSettings):
     settings = {}
 
 
+def _ensure_path():
+    """Ensure common binary paths are in PATH (macOS homebrew, Linux)."""
+    import os
+    extra_paths = ['/opt/homebrew/bin', '/usr/local/bin', '/snap/bin']
+    current = os.environ.get('PATH', '')
+    for p in extra_paths:
+        if p not in current and os.path.isdir(p):
+            current = p + ':' + current
+    os.environ['PATH'] = current
+
+
+# Ensure PATH is set at module load time
+_ensure_path()
+
+
 def _has_pgsrip():
     """Check if pgsrip and tesseract are available."""
     try:
