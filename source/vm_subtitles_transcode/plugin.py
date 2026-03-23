@@ -73,10 +73,11 @@ class PluginStreamMapper(StreamMapper):
 
         # Should not be reached (PT-BR goes through framework default copy path),
         # but kept as a safe fallback.
-        logger.info("[WORKER] Keeping subtitle: lang=%s codec=%s (input s:%d)", lang, codec, stream_id)
+        logger.info("[WORKER] Keeping subtitle: lang=%s codec=%s (input s:%d, output s:%d)",
+                     lang, codec, stream_id, self.subtitle_output_count)
         return {
             'stream_mapping': ['-map', '0:s:{}'.format(stream_id)],
-            'stream_encoding': ['-c:s:{}'.format(stream_id), 'copy'],
+            'stream_encoding': ['-c:s:{}'.format(self.subtitle_output_count), 'copy'],
         }
 
 

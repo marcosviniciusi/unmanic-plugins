@@ -1,3 +1,8 @@
+**<span style="color:#56adda">3.5.0</span>** *(marcosviniciusi)* - Fix subtitle stream index mismatch
+- FIX: Separate input/output index counters for subtitle streams in StreamMapper
+- FIX: When removing subtitle streams, output index (`-c:s:N`) no longer desynchronizes from input index (`-map 0:s:N`)
+- FIX: Resolves FFmpeg error "Subtitle encoding currently only possible from text to text or bitmap to bitmap" on files with many subtitle tracks (e.g., Remux with 20+ PGS subtitles)
+
 **<span style="color:#56adda">3.4.0</span>** *(marcosviniciusi)* - Plugin reorganization
 - Renamed plugin from `equalize_subtitles_ptbr` to `subtitles_transcode` for unique identification
 - Updated plugin ID, name and tags to avoid conflicts with official repository

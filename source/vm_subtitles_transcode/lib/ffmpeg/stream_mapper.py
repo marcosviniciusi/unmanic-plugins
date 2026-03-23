@@ -178,12 +178,15 @@ class StreamMapper(object):
         self.stream_mapping = []
         self.stream_encoding = []
 
-        # Count streams by type
+        # Count streams by type (input index)
         self.video_stream_count = 0
         self.audio_stream_count = 0
         self.subtitle_stream_count = 0
         self.data_stream_count = 0
         self.attachment_stream_count = 0
+
+        # Output index counters (only incremented when a stream is actually mapped)
+        self.subtitle_output_count = 0
 
         # Set flag for finding a stream that needs to be processed as False by default.
         found_streams_to_process = False
@@ -240,23 +243,35 @@ class StreamMapper(object):
             # If this is a subtitle stream?
             elif codec_type == "subtitle":
                 # Map the subtitle stream
+                # NOTE: subtitle_stream_count = input index (for -map 0:s:N)
+                #        subtitle_output_count = output index (for -c:s:N)
+                #        These diverge when streams are removed.
                 if "subtitle" in processing_stream_type:
                     if not self.test_stream_needs_processing(stream_info):
-                        self.__copy_stream_mapping('s', self.subtitle_stream_count)
+                        self.stream_mapping += ['-map', '0:s:{}'.format(self.subtitle_stream_count)]
+                        self.stream_encoding += ['-c:s:{}'.format(self.subtitle_output_count), 'copy']
                         self.subtitle_stream_count += 1
+                        self.subtitle_output_count += 1
                         continue
                     else:
                         mapping = self.custom_stream_mapping(stream_info, self.subtitle_stream_count)
                         if mapping:
                             found_streams_to_process = True
                             self.__apply_custom_stream_mapping(mapping)
+                            # Only increment output count if stream was actually mapped
+                            if mapping.get('stream_mapping'):
+                                self.subtitle_output_count += 1
                         else:
-                            self.__copy_stream_mapping('s', self.subtitle_stream_count)
+                            self.stream_mapping += ['-map', '0:s:{}'.format(self.subtitle_stream_count)]
+                            self.stream_encoding += ['-c:s:{}'.format(self.subtitle_output_count), 'copy']
+                            self.subtitle_output_count += 1
                         self.subtitle_stream_count += 1
                         continue
                 else:
-                    self.__copy_stream_mapping('s', self.subtitle_stream_count)
+                    self.stream_mapping += ['-map', '0:s:{}'.format(self.subtitle_stream_count)]
+                    self.stream_encoding += ['-c:s:{}'.format(self.subtitle_output_count), 'copy']
                     self.subtitle_stream_count += 1
+                    self.subtitle_output_count += 1
                     continue
 
             # If this is a data stream?
