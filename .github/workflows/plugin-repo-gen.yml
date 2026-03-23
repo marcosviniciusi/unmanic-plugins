@@ -34,6 +34,7 @@ jobs:
         for root_dir in ./*; do
             if [ -d "${root_dir:?}" ]; then
                 [ "$(basename ${root_dir:?})" == "docs" ] && continue
+                [ "$(basename ${root_dir:?})" == "docker" ] && continue
                 [ "$(basename ${root_dir:?})" == ".github" ] && continue
                 if [ "$(basename ${root_dir:?})" != "source" ]; then
                     echo "FAIL - Found an unexpected directory in '${root_dir:?}'. All plugins should be added to './source/'."

@@ -23,7 +23,7 @@ Repository ID: `repository.vinicima` (defined in `config.json`).
 
 | Dir / Plugin ID | Name | Version | Original Author | Category |
 |---|---|---|---|---|
-| `vm_postprocessor_otel_trace` | Post-Processor - OpenTelemetry Task Log | 0.2.0 | marcosviniciusi | Observability |
+| `vm_postprocessor_otel_trace` | Post-Processor - OpenTelemetry Task Log | 0.4.0 | marcosviniciusi | Observability |
 
 ### Filter / Ignore Plugins
 
