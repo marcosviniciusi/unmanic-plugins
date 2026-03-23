@@ -86,6 +86,18 @@ Designed for Brazilian Portuguese media libraries:
 - **No conversion**: Subtitles are stream-copied regardless of format (SRT, ASS, PGS, etc.)
 - Tags files with metadata to avoid reprocessing
 
+#### `vm_subtitles_pgs_to_srt` — Convert All Subtitle Formats to SRT
+
+Converts non-SRT subtitles to plain SubRip (SRT) for maximum compatibility with Emby/Jellyfin/Plex:
+
+- **PGS / VOBSUB (bitmap)**: Extracted via mkvextract, converted to SRT via OCR (pgsrip + tesseract)
+- **ASS / SSA (styled text)**: Converted to SRT via FFmpeg — removes embedded styling that causes small/yellow subtitles in Emby
+- **SRT**: Copied as-is, no conversion needed
+- **Graceful fallback**: If tesseract/pgsrip are not installed, bitmap tracks are copied as-is (no error)
+- **Runs AFTER** `vm_subtitles_transcode` — only processes the PT-BR tracks that survived filtering
+
+**Requirements**: `tesseract-ocr`, `tesseract-ocr-por`, `mkvtoolnix`, `pgsrip` (Python). Use the `marcosviniciusi/unmanic:ocr` Docker image which includes all dependencies.
+
 ### Ignore / Filter Plugins
 
 These plugins control which files enter the processing pipeline:
@@ -146,15 +158,34 @@ These plugins are called by a worker and produce a custom command to be executed
 1. vm_video_transcoder              ← Transcode video to HEVC
 2. vm_audio_transcoder              ← Convert audio to EAC3 5.1
 3. vm_audio_transcode_create_stereo ← Add stereo downmix track
-4. vm_subtitles_transcode           ← Keep PT-BR subtitles only
-5. vm_audio_remove_duplicates       ← Remove duplicate audio streams
-6. vm_tag_pipeline_complete         ← Write UNMANIC_FULL_PIPELINE=processed tag (LAST)
+4. vm_audio_remove_duplicates       ← Remove duplicate audio streams
+5. vm_subtitles_transcode           ← Keep PT-BR subtitles only (remove all others)
+6. vm_subtitles_pgs_to_srt          ← Convert remaining PGS/ASS→SRT via OCR/FFmpeg
+7. vm_tag_pipeline_complete         ← Write UNMANIC_FULL_PIPELINE=processed tag (LAST)
 ```
 
 ### Post-Processor
 
 ```
 1. vm_postprocessor_otel_trace      ← Log task results to OTEL backend (SigNoz/Jaeger/Tempo)
+```
+
+## Docker Image
+
+For the `vm_subtitles_pgs_to_srt` plugin, use the custom Docker image with OCR dependencies pre-installed:
+
+```bash
+docker pull marcosviniciusi/unmanic:ocr
+```
+
+This image extends `josh5/unmanic:latest` with: tesseract-ocr 5.x, tessdata_best (por + eng), mkvtoolnix, pgsrip.
+
+See [`docker/unmanic/README.md`](docker/unmanic/README.md) for build instructions and docker-compose examples.
+
+For the Mac (brew) instance, install dependencies manually:
+```bash
+brew install tesseract tesseract-lang mkvtoolnix
+/opt/homebrew/opt/python@3.11/bin/pip3.11 install pgsrip
 ```
 
 ## Installation
