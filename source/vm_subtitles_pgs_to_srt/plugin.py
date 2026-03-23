@@ -144,12 +144,13 @@ def _extract_pgs_to_sup(input_file, sub_index, output_sup):
 def _ocr_sup_to_srt(sup_file, srt_file, language='por'):
     """Run OCR on a .sup file to produce a .srt file using pgsrip."""
     try:
-        from pgsrip import pgsrip, Options
+        from pgsrip import pgsrip, Options, Sup
         from babelfish import Language
 
         lang = Language(language)
         options = Options(languages={lang}, overwrite=True)
-        pgsrip.rip(sup_file, options)
+        sup_media = Sup(sup_file)
+        pgsrip.rip(sup_media, options)
 
         # pgsrip writes .srt alongside the .sup file
         expected_srt = os.path.splitext(sup_file)[0] + '.srt'

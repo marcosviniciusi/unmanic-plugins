@@ -1,3 +1,6 @@
+**<span style="color:#56adda">0.1.5</span>** *(marcosviniciusi)* - Fix pgsrip API call
+- FIX: Use `Sup(path)` object instead of raw string path when calling `pgsrip.rip()`. Fixes `'str' object has no attribute 'get_pgs_medias'` error.
+
 **<span style="color:#56adda">0.1.4</span>** *(marcosviniciusi)* - Fix PATH injection at module level
 - FIX: Inject /opt/homebrew/bin and /usr/local/bin into os.environ['PATH'] at module load time (not just shutil.which). Ensures mkvextract and tesseract are found when Unmanic daemon starts with minimal PATH.
 
