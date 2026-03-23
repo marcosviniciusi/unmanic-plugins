@@ -16,7 +16,7 @@ Repository ID: `repository.vinicima` (defined in `config.json`).
 | `vm_audio_transcode_create_stereo` | Audio Transcode Create Stereo - Surround Sound Downmix | 0.2.0 | Josh.5 | Audio |
 | `vm_audio_remove_duplicates` | Audio Remove Duplicates - Deduplicate Audio Streams | 0.1.0 | marcosviniciusi | Audio |
 | `vm_subtitles_transcode` | Subtitles Transcode - Keep PT-BR Only | 3.5.0 | marcosviniciusi | Subtitle |
-| `vm_subtitles_pgs_to_srt` | Subtitles to SRT - Convert All Formats to SubRip | 0.1.0 | marcosviniciusi | Subtitle |
+| `vm_subtitles_pgs_to_srt` | Subtitle Transcode - OCR PGS/ASS to SRT | 0.1.1 | marcosviniciusi | Subtitle |
 | `vm_tag_pipeline_complete` | Tag Pipeline Complete - Write Full Pipeline Tag | 0.1.0 | marcosviniciusi | Pipeline |
 
 ### Post-Processor Plugins
