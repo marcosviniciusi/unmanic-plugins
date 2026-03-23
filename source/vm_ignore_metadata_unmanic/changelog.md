@@ -1,3 +1,7 @@
+**<span style="color:#56adda">0.0.4</span>** *(marcosviniciusi)*
+- Changed tag from `UNMANIC_FULL_PIPELINE` to `UNMANIC_FULL_PIPELINE_V2` to match pipeline v2 (with OCR subtitle plugin)
+- Files processed by pipeline v1 will re-enter the queue and pass through the new OCR plugin
+
 **<span style="color:#56adda">0.0.3</span>** *(marcosviniciusi)*
 - Changed to check `UNMANIC_FULL_PIPELINE=processed` tag (full pipeline completion)
 - Changed priority to 0 (runs LAST — lower number = runs later in Unmanic) so it overrides all other plugins' decisions

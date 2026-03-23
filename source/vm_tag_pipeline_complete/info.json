@@ -4,7 +4,7 @@
         1,
         2
     ],
-    "description": "Writes UNMANIC_FULL_PIPELINE=processed metadata tag to mark the file as fully processed. Place as the LAST processing step in your pipeline. Works with vm_ignore_metadata_unmanic to prevent reprocessing.",
+    "description": "Writes UNMANIC_FULL_PIPELINE_V2=processed metadata tag to mark the file as fully processed. Place as the LAST processing step in your pipeline. Works with vm_ignore_metadata_unmanic to prevent reprocessing.",
     "icon": "",
     "id": "vm_tag_pipeline_complete",
     "name": "Tag Pipeline Complete - Write Full Pipeline Tag",
@@ -15,5 +15,5 @@
         "on_worker_process": 99
     },
     "tags": "metadata,tag,pipeline,ffmpeg",
-    "version": "0.1.0"
+    "version": "0.2.0"
 }

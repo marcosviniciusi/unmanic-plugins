@@ -29,7 +29,7 @@ from vm_tag_pipeline_complete.lib.ffmpeg import Probe, Parser
 # Configure plugin logger
 logger = logging.getLogger("Unmanic.Plugin.vm_tag_pipeline_complete")
 
-METADATA_TAG_KEY = 'UNMANIC_FULL_PIPELINE'
+METADATA_TAG_KEY = 'UNMANIC_FULL_PIPELINE_V2'
 METADATA_TAG_VALUE = 'processed'
 
 

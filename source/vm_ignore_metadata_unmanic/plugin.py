@@ -28,13 +28,13 @@ import json
 # Configure plugin logger
 logger = logging.getLogger("Unmanic.Plugin.vm_ignore_metadata_unmanic")
 
-METADATA_TAG_KEY = 'UNMANIC_FULL_PIPELINE'
+METADATA_TAG_KEY = 'UNMANIC_FULL_PIPELINE_V2'
 METADATA_TAG_VALUE = 'processed'
 
 
 def check_file_has_pipeline_tag(path):
     """
-    Check if file has UNMANIC_FULL_PIPELINE=processed format-level metadata tag.
+    Check if file has UNMANIC_FULL_PIPELINE_V2=processed format-level metadata tag.
     If this tag exists, the file has already been through the full processing pipeline.
 
     :param path: Path to the file

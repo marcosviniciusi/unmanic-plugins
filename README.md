@@ -106,7 +106,7 @@ These plugins control which files enter the processing pipeline:
 |---|---|
 | `ignore_files_recently_modified` | Skip files modified less than X time ago (prevents processing files still being written/downloaded) |
 | `vm_ignore_task_history` | Skip files already processed by Unmanic |
-| `vm_ignore_metadata_unmanic` | **Completely ignore** files with `UNMANIC_FULL_PIPELINE=processed` tag (runs LAST, overrides all) |
+| `vm_ignore_metadata_unmanic` | **Completely ignore** files with `UNMANIC_FULL_PIPELINE_V2=processed` tag (runs LAST, overrides all) |
 | `vm_ignore_video_over_res` | Skip files exceeding a configured resolution limit |
 | `vm_ignore_video_under_res` | Skip files below a configured resolution limit |
 
@@ -114,7 +114,7 @@ These plugins control which files enter the processing pipeline:
 
 #### `vm_tag_pipeline_complete` — Tag Pipeline Complete
 
-Writes the **`UNMANIC_FULL_PIPELINE=processed`** metadata tag to mark files that have completed the entire processing pipeline. This plugin remuxes the file (copies all streams without re-encoding) and adds the tag at the format level.
+Writes the **`UNMANIC_FULL_PIPELINE_V2=processed`** metadata tag to mark files that have completed the entire processing pipeline. This plugin remuxes the file (copies all streams without re-encoding) and adds the tag at the format level.
 
 - **Must be the LAST processing step** in the pipeline
 - **Works with** `vm_ignore_metadata_unmanic` — which runs last among file test plugins (priority 0) and completely ignores files with this tag
@@ -142,7 +142,7 @@ These plugins are called to test if files should be added to the pending task li
 ```
 1. ignore_files_recently_modified        ← Skip files still being written/downloaded
 2. Limit library search by file extension ← Only process files with specific extensions (built-in)
-3. vm_ignore_metadata_unmanic            ← Skip files tagged with UNMANIC_FULL_PIPELINE=processed
+3. vm_ignore_metadata_unmanic            ← Skip files tagged with UNMANIC_FULL_PIPELINE_V2=processed
 4. vm_video_transcoder                   ← Check if video needs transcoding to HEVC
 5. vm_audio_transcoder                   ← Check if audio needs conversion to EAC3 5.1
 6. vm_audio_transcode_create_stereo      ← Check if surround streams need stereo downmix
@@ -161,7 +161,7 @@ These plugins are called by a worker and produce a custom command to be executed
 4. vm_audio_remove_duplicates       ← Remove duplicate audio streams
 5. vm_subtitles_transcode           ← Keep PT-BR subtitles only (remove all others)
 6. vm_subtitles_pgs_to_srt          ← Convert remaining PGS/ASS→SRT via OCR/FFmpeg
-7. vm_tag_pipeline_complete         ← Write UNMANIC_FULL_PIPELINE=processed tag (LAST)
+7. vm_tag_pipeline_complete         ← Write UNMANIC_FULL_PIPELINE_V2=processed tag (LAST)
 ```
 
 ### Post-Processor
