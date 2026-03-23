@@ -6,7 +6,7 @@
     "description": "Converts PGS/VOBSUB (bitmap) subtitles to SRT via OCR and ASS/SSA (styled text) to SRT via FFmpeg. All subtitles become plain SRT embedded in the MKV.",
     "icon": "",
     "id": "vm_subtitles_pgs_to_srt",
-    "name": "Subtitles to SRT - Convert All Formats to SubRip",
+    "name": "Subtitle Transcode - OCR PGS/ASS to SRT",
     "priorities": {
         "on_library_management_file_test": 50,
         "on_worker_process": 50
