@@ -27,7 +27,7 @@ import os
 from unmanic.libs.unplugins.settings import PluginSettings
 
 # Configure plugin logger
-logger = logging.getLogger("Unmanic.Plugin.limit_library_search_by_file_extension")
+logger = logging.getLogger("Unmanic.Plugin.vm_limit_library_search_by_extension")
 
 
 class Settings(PluginSettings):

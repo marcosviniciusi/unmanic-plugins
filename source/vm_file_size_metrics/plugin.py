@@ -33,7 +33,7 @@ from unmanic.libs.logs import UnmanicLogging
 from unmanic.libs.unplugins.settings import PluginSettings
 
 # Configure plugin logger
-logger = UnmanicLogging.get_logger(name='Unmanic.Plugin.file_size_metrics')
+logger = UnmanicLogging.get_logger(name='Unmanic.Plugin.vm_file_size_metrics')
 
 
 class Settings(PluginSettings):
@@ -562,7 +562,7 @@ def on_postprocessor_task_results(data, store):
     size_difference = dest_size - source_size
     processing_duration = unix_finish_time - unix_start_time
     data_search_key = f"{data.get('task_id')} | {data.get('library_id')} | {original_source_path}"
-    UnmanicLogging.data("file_size_metrics",
+    UnmanicLogging.data("vm_file_size_metrics",
                         data_search_key=data_search_key,
                         source_abspath=original_source_path,
                         dest_abspath=dest_abspath,

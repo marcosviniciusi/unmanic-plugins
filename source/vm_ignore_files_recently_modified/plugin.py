@@ -29,7 +29,7 @@ import humanfriendly
 from unmanic.libs.unplugins.settings import PluginSettings
 
 # Configure plugin logger
-logger = logging.getLogger("Unmanic.Plugin.ignore_files_recently_modified")
+logger = logging.getLogger("Unmanic.Plugin.vm_ignore_files_recently_modified")
 
 
 class Settings(PluginSettings):
