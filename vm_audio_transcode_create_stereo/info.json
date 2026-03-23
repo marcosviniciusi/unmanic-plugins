@@ -1,0 +1,20 @@
+{
+    "author": "Josh.5 / marcosviniciusi",
+    "compatibility": [
+        1,
+        2
+    ],
+    "description": "Create a stereo clone of all surround audio streams (>2ch). Prevents reprocessing via format-level metadata tag, channel/language analysis, and codec detection. Stereo titles reflect real output specs (language, codec, stereo).",
+    "icon": "https://raw.githubusercontent.com/Josh5/unmanic.plugin.create_stereo_audio_clone/master/icon.png",
+    "id": "vm_audio_transcode_create_stereo",
+    "name": "Audio Transcode Create Stereo - Surround Sound Downmix",
+    "platform": [
+        "all"
+    ],
+    "priorities": {
+        "on_library_management_file_test": 99,
+        "on_worker_process": 5
+    },
+    "tags": "audio,ffmpeg,stereo,downmix,library file test",
+    "version": "0.2.0"
+}

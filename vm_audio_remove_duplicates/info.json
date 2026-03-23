@@ -1,0 +1,20 @@
+{
+    "author": "marcosviniciusi",
+    "compatibility": [
+        1,
+        2
+    ],
+    "description": "Remove duplicate audio streams from media files. Streams are considered duplicates when all specs match: codec, channels, language, title, and bitrate. Keeps only the first occurrence of each unique audio stream.",
+    "icon": "",
+    "id": "vm_audio_remove_duplicates",
+    "name": "Audio Remove Duplicates - Deduplicate Audio Streams",
+    "platform": [
+        "all"
+    ],
+    "priorities": {
+        "on_library_management_file_test": 100,
+        "on_worker_process": 6
+    },
+    "tags": "audio,ffmpeg,duplicates,cleanup,library file test",
+    "version": "0.1.0"
+}

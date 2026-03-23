@@ -1,0 +1,19 @@
+{
+    "author": "marcosviniciusi",
+    "compatibility": [
+        1,
+        2
+    ],
+    "description": "Ignore files that have already completed the full processing pipeline. Checks for UNMANIC_FULL_PIPELINE_V2=processed metadata tag. Runs LAST (priority 0) to override all other plugins — if tag exists, file is completely ignored.",
+    "icon": "https://raw.githubusercontent.com/Josh5/unmanic.plugin.ignore_files_recently_modified/master/icon.png",
+    "id": "vm_ignore_metadata_unmanic",
+    "name": "Ignore - Full Pipeline Completed",
+    "platform": [
+        "all"
+    ],
+    "priorities": {
+        "on_library_management_file_test": 0
+    },
+    "tags": "library file test,ignore,filter,metadata,pipeline",
+    "version": "0.0.4"
+}
