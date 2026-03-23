@@ -1,3 +1,6 @@
+**<span style="color:#56adda">0.1.4</span>** *(marcosviniciusi)* - Fix PATH injection at module level
+- FIX: Inject /opt/homebrew/bin and /usr/local/bin into os.environ['PATH'] at module load time (not just shutil.which). Ensures mkvextract and tesseract are found when Unmanic daemon starts with minimal PATH.
+
 **<span style="color:#56adda">0.1.3</span>** *(marcosviniciusi)* - Fix PATH for macOS Homebrew
 - FIX: Add /opt/homebrew/bin and /usr/local/bin to PATH at module load. Fixes mkvextract/tesseract not found on macOS when Unmanic runs with minimal PATH.
 

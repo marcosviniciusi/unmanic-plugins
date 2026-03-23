@@ -25,6 +25,13 @@ from vm_subtitles_pgs_to_srt.lib.ffmpeg import Probe, Parser
 
 logger = logging.getLogger("Unmanic.Plugin.vm_subtitles_pgs_to_srt")
 
+# Ensure common tool paths are in PATH (macOS Homebrew, Linux)
+_EXTRA_PATHS = ['/opt/homebrew/bin', '/usr/local/bin', '/usr/bin']
+_current_path = os.environ.get('PATH', '')
+for _p in _EXTRA_PATHS:
+    if _p not in _current_path:
+        os.environ['PATH'] = _p + ':' + os.environ.get('PATH', '')
+
 PROCESSED_TAG = 'unmanic_subs_to_srt'
 
 # Subtitle codecs that need conversion
