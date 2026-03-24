@@ -89,11 +89,12 @@ def on_library_management_file_test(data):
     abspath = data.get('path')
 
     if check_file_has_pipeline_tag(abspath):
-        # File already completed the full pipeline — IGNORE COMPLETELY
-        # This runs with priority 0 (last) so it overrides any other plugin's decision
         data['add_file_to_pending_tasks'] = False
-        logger.info("File has {}={} tag — full pipeline already completed. "
-                     "IGNORING completely: '{}'".format(
-                         METADATA_TAG_KEY, METADATA_TAG_VALUE, abspath))
+        logger.info("File has {}={} tag — IGNORING: '{}'".format(
+            METADATA_TAG_KEY, METADATA_TAG_VALUE, abspath))
+    else:
+        data['add_file_to_pending_tasks'] = True
+        logger.info("File missing {}={} tag — adding to queue: '{}'".format(
+            METADATA_TAG_KEY, METADATA_TAG_VALUE, abspath))
 
     return data
