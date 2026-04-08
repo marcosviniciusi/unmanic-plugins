@@ -31,6 +31,7 @@ from typing import List, Optional, Iterable
 from vm_video_transcoder.lib.encoders.libx import LibxEncoder
 from vm_video_transcoder.lib.encoders.libsvtav1 import LibsvtAv1Encoder
 from vm_video_transcoder.lib.encoders.qsv import QsvEncoder
+from vm_video_transcoder.lib.encoders.qsv_gen11 import QsvGen11Encoder
 from vm_video_transcoder.lib.encoders.vaapi import VaapiEncoder
 from vm_video_transcoder.lib.encoders.nvenc import NvencEncoder
 from vm_video_transcoder.lib.encoders.videotoolbox import VideoToolboxEncoder
@@ -139,6 +140,7 @@ def available_encoders(settings=None, probe=None):
         LibxEncoder,
         LibsvtAv1Encoder,
         QsvEncoder,
+        QsvGen11Encoder,
         VaapiEncoder,
         NvencEncoder,
         VideoToolboxEncoder,

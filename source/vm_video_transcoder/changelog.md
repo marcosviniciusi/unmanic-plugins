@@ -1,3 +1,11 @@
+**<span style="color:#56adda">0.3.2</span>** *(marcosviniciusi)*
+- Add QSV Gen11+ encoder with 8-bit/10-bit profile selection (Tiger Lake and newer)
+- New "Profile" dropdown in standard mode: Auto (detect from source), Main (force 8-bit), Main10 (force 10-bit)
+- Automatic detection of source bit depth in Auto mode — selects correct pixel format and profile per video
+- Existing QSV encoder unchanged — Gen11+ is a separate encoder option in the dropdown
+- Forces correct pixel format in filtergraph (nv12 for 8-bit, p010le for 10-bit)
+- Properly strips HDR metadata when forcing 8-bit output from HDR sources
+
 **<span style="color:#56adda">0.3.1</span>** *(marcosviniciusi)*
 - Fix: Write `unmanic_status=processed` metadata tag in ALL modes (basic, standard, advanced) — previously only written in standard mode
 - Fix: Check metadata tag FIRST in `on_library_management_file_test` and `on_worker_process` — previously only checked when `force_transcode` was enabled

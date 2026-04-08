@@ -26,6 +26,7 @@ import logging
 from vm_video_transcoder.lib import tools
 from vm_video_transcoder.lib.encoders.libx import LibxEncoder
 from vm_video_transcoder.lib.encoders.qsv import QsvEncoder
+from vm_video_transcoder.lib.encoders.qsv_gen11 import QsvGen11Encoder
 from vm_video_transcoder.lib.encoders.vaapi import VaapiEncoder
 from vm_video_transcoder.lib.encoders.nvenc import NvencEncoder
 from vm_video_transcoder.lib.encoders.libsvtav1 import LibsvtAv1Encoder
@@ -219,15 +220,16 @@ class PluginStreamMapper(StreamMapper):
         libx_encoder = LibxEncoder(self.settings, self.probe)
         stva1_encoder = LibsvtAv1Encoder(self.settings, self.probe)
         qsv_encoder = QsvEncoder(self.settings, self.probe)
+        qsv_gen11_encoder = QsvGen11Encoder(self.settings, self.probe)
         vaapi_encoder = VaapiEncoder(self.settings, self.probe)
         nvenc_encoder = NvencEncoder(self.settings, self.probe)
 
         # HW accelerated encoder libs
-        hw_encoder_libs = [qsv_encoder, vaapi_encoder, nvenc_encoder]
+        hw_encoder_libs = [qsv_gen11_encoder, qsv_encoder, vaapi_encoder, nvenc_encoder]
         hw_encoder = next((lib for lib in hw_encoder_libs if encoder_name in lib.provides()), None)
 
         # All available encoder libs
-        all_encoder_libs = [libx_encoder, qsv_encoder, vaapi_encoder, nvenc_encoder, stva1_encoder]
+        all_encoder_libs = [libx_encoder, qsv_gen11_encoder, qsv_encoder, vaapi_encoder, nvenc_encoder, stva1_encoder]
         active_encoder = next((lib for lib in all_encoder_libs if encoder_name in lib.provides()), None)
 
         # Apply smart filters first
@@ -404,14 +406,22 @@ class PluginStreamMapper(StreamMapper):
                         "execution_stage": self.execution_stage,
                     })
 
+                # Resolve virtual encoder name to real FFmpeg name (e.g. hevc_qsv_gen11 -> hevc_qsv)
+                encoder_lib_for_name = tools.available_encoders(settings=self.settings).get(encoder_name)
+                ffmpeg_encoder_name = encoder_name
+                if encoder_lib_for_name:
+                    details = encoder_lib_for_name.encoder_details(encoder_name)
+                    ffmpeg_encoder_name = details.get('ffmpeg_encoder', encoder_name)
+
                 stream_encoding = [
-                    '-c:{}'.format(stream_specifier), encoder_name,
+                    '-c:{}'.format(stream_specifier), ffmpeg_encoder_name,
                 ]
 
                 # Load encoder classes
                 libx_encoder = LibxEncoder(self.settings, self.probe)
                 stva1_encoder = LibsvtAv1Encoder(self.settings, self.probe)
                 qsv_encoder = QsvEncoder(self.settings, self.probe)
+                qsv_gen11_encoder = QsvGen11Encoder(self.settings, self.probe)
                 vaapi_encoder = VaapiEncoder(self.settings, self.probe)
                 nvenc_encoder = NvencEncoder(self.settings, self.probe)
                 videotoolbox_encoder = VideoToolboxEncoder(self.settings, self.probe)
@@ -423,6 +433,10 @@ class PluginStreamMapper(StreamMapper):
                     stream_encoding += stream_args.get("stream_args", [])
                 elif encoder_name in stva1_encoder.provides():
                     stream_args = vaapi_encoder.stream_args(stream_info, stream_id, encoder_name, filter_state=filter_state)
+                    stream_encoding += stream_args.get("encoder_args", [])
+                    stream_encoding += stream_args.get("stream_args", [])
+                elif encoder_name in qsv_gen11_encoder.provides():
+                    stream_args = qsv_gen11_encoder.stream_args(stream_info, stream_id, encoder_name, filter_state=filter_state)
                     stream_encoding += stream_args.get("encoder_args", [])
                     stream_encoding += stream_args.get("stream_args", [])
                 elif encoder_name in qsv_encoder.provides():

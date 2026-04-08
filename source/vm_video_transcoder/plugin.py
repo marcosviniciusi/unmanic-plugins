@@ -40,6 +40,7 @@ from vm_video_transcoder.lib.ffmpeg import Parser, Probe
 from vm_video_transcoder.lib.global_settings import GlobalSettings
 from vm_video_transcoder.lib.encoders.libx import LibxEncoder
 from vm_video_transcoder.lib.encoders.qsv import QsvEncoder
+from vm_video_transcoder.lib.encoders.qsv_gen11 import QsvGen11Encoder
 from vm_video_transcoder.lib.encoders.vaapi import VaapiEncoder
 from vm_video_transcoder.lib.encoders.nvenc import NvencEncoder
 from vm_video_transcoder.lib.encoders.libsvtav1 import LibsvtAv1Encoder
@@ -117,6 +118,7 @@ class Settings(PluginSettings):
         # Fetch all encoder settings from encoder libs
         libx_options = LibxEncoder(self.settings).options()
         qsv_options = QsvEncoder(self.settings).options()
+        qsv_gen11_options = QsvGen11Encoder(self.settings).options()
         vaapi_options = VaapiEncoder(self.settings).options()
         nvenc_options = NvencEncoder(self.settings).options()
         libsvtav1_options = LibsvtAv1Encoder(self.settings).options()
@@ -124,6 +126,7 @@ class Settings(PluginSettings):
         return {
             **libx_options,
             **qsv_options,
+            **qsv_gen11_options,
             **vaapi_options,
             **nvenc_options,
             **libsvtav1_options,
