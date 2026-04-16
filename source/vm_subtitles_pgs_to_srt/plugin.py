@@ -12,7 +12,6 @@ Converts non-SRT subtitles to SRT:
 Runs AFTER vm_subtitles_transcode so only PT-BR tracks remain.
 """
 
-import json
 import logging
 import os
 import shutil
@@ -24,13 +23,6 @@ from unmanic.libs.unplugins.settings import PluginSettings
 from vm_subtitles_pgs_to_srt.lib.ffmpeg import Probe, Parser
 
 logger = logging.getLogger("Unmanic.Plugin.vm_subtitles_pgs_to_srt")
-
-# Ensure common tool paths are in PATH (macOS Homebrew, Linux)
-_EXTRA_PATHS = ['/opt/homebrew/bin', '/usr/local/bin', '/usr/bin']
-_current_path = os.environ.get('PATH', '')
-for _p in _EXTRA_PATHS:
-    if _p not in _current_path:
-        os.environ['PATH'] = _p + ':' + os.environ.get('PATH', '')
 
 PROCESSED_TAG = 'unmanic_subs_to_srt'
 
@@ -45,9 +37,8 @@ class Settings(PluginSettings):
 
 
 def _ensure_path():
-    """Ensure common binary paths are in PATH (macOS homebrew, Linux)."""
-    import os
-    extra_paths = ['/opt/homebrew/bin', '/usr/local/bin', '/snap/bin']
+    """Ensure common binary paths are in PATH (macOS Homebrew, Linux)."""
+    extra_paths = ['/opt/homebrew/bin', '/usr/local/bin', '/usr/bin', '/snap/bin']
     current = os.environ.get('PATH', '')
     for p in extra_paths:
         if p not in current and os.path.isdir(p):
@@ -60,34 +51,18 @@ _ensure_path()
 
 
 def _has_pgsrip():
-    """Check if pgsrip and tesseract are available."""
-    try:
-        # Fix: other Unmanic plugins (e.g., otel) may bundle an old
-        # importlib_metadata backport in their site-packages that overrides
-        # the stdlib importlib.metadata and breaks pgsrip's metadata lookup
-        # (KeyError: 'home_page'). Clean up before importing pgsrip.
-        import sys
-        # Remove otel plugin's site-packages from sys.path
-        clean_path = [p for p in sys.path if '/vm_postprocessor_otel_trace/' not in p]
-        original_path = sys.path[:]
-        sys.path = clean_path
-        # Remove stale importlib_metadata from sys.modules if loaded from wrong path
-        stale_modules = [k for k in sys.modules
-                         if 'importlib_metadata' in k
-                         and hasattr(sys.modules[k], '__file__')
-                         and sys.modules[k].__file__
-                         and 'vm_postprocessor_otel_trace' in str(sys.modules[k].__file__)]
-        for mod in stale_modules:
-            del sys.modules[mod]
-        try:
-            import pgsrip  # noqa: F401
-        finally:
-            sys.path = original_path
-        if shutil.which('tesseract') is None:
-            return False
-        return True
-    except (ImportError, KeyError):
-        return False
+    """Check if pgsrip CLI and tesseract are available.
+
+    Uses CLI check instead of 'import pgsrip' to avoid importlib_metadata
+    conflict with the otel plugin's bundled backport.
+    """
+    has_pgsrip = shutil.which('pgsrip') is not None
+    has_tesseract = shutil.which('tesseract') is not None
+    if not has_pgsrip:
+        logger.debug("[OCR] pgsrip CLI not found in PATH")
+    if not has_tesseract:
+        logger.debug("[OCR] tesseract not found in PATH")
+    return has_pgsrip and has_tesseract
 
 
 def _has_mkvextract():
@@ -96,13 +71,31 @@ def _has_mkvextract():
 
 
 def _is_already_processed(probe):
-    """Check if file has already been processed by this plugin."""
+    """Check if file has already been processed by this plugin.
+
+    Returns True only if the processed tag exists AND no bitmap subtitles remain.
+    This handles files incorrectly tagged from previous runs where OCR failed.
+    """
     format_tags = probe.get('format', {}).get('tags', {})
+    has_tag = False
     for key, value in format_tags.items():
         if key.lower() == PROCESSED_TAG:
             if str(value).lower() in ('true', '1', 'yes', 'processed'):
-                return True
-    return False
+                has_tag = True
+                break
+
+    if not has_tag:
+        return False
+
+    # Even if tagged, re-process if bitmap subtitles still exist
+    for s in probe.get('streams', []):
+        if s.get('codec_type', '').lower() == 'subtitle':
+            codec = s.get('codec_name', '').lower()
+            if codec in BITMAP_CODECS:
+                logger.info("[CHECK] File has processed tag but still contains bitmap sub (%s), will re-process", codec)
+                return False
+
+    return True
 
 
 def _get_subtitle_streams(probe):
@@ -142,15 +135,23 @@ def _extract_pgs_to_sup(input_file, sub_index, output_sup):
 
 
 def _ocr_sup_to_srt(sup_file, srt_file, language='por'):
-    """Run OCR on a .sup file to produce a .srt file using pgsrip."""
-    try:
-        from pgsrip import pgsrip, Options, Sup
-        from babelfish import Language
+    """Run OCR on a .sup file to produce a .srt file using pgsrip CLI.
 
-        lang = Language(language)
-        options = Options(languages={lang}, overwrite=True)
-        sup_media = Sup(sup_file)
-        pgsrip.rip(sup_media, options)
+    Uses subprocess to call pgsrip CLI instead of importing the Python module,
+    avoiding importlib_metadata conflicts with the otel plugin.
+
+    NOTE: No language filter (-l) is passed because .sup files extracted by
+    mkvextract don't contain language metadata, causing pgsrip to filter them
+    out. The language is already controlled by vm_subtitles_transcode which
+    keeps only PT-BR tracks before this plugin runs.
+    """
+    try:
+        cmd = ['pgsrip', sup_file]
+        logger.info("[OCR] Running: %s", ' '.join(cmd))
+        result = subprocess.run(cmd, capture_output=True, text=True, timeout=600)
+
+        if result.returncode != 0:
+            logger.warning("[OCR] pgsrip returned %d: %s", result.returncode, result.stderr.strip())
 
         # pgsrip writes .srt alongside the .sup file
         expected_srt = os.path.splitext(sup_file)[0] + '.srt'
@@ -162,35 +163,12 @@ def _ocr_sup_to_srt(sup_file, srt_file, language='por'):
         else:
             logger.warning("[OCR] pgsrip produced no output for: %s", sup_file)
             return False
+    except subprocess.TimeoutExpired:
+        logger.error("[OCR] pgsrip timed out (600s) for: %s", sup_file)
+        return False
     except Exception as e:
         logger.error("[OCR] pgsrip failed: %s", str(e))
         return False
-
-
-def _map_language_to_tesseract(lang_code):
-    """Map ISO 639-2/B language codes to tesseract language codes."""
-    mapping = {
-        'por': 'por', 'pt': 'por', 'pob': 'por',
-        'eng': 'eng', 'en': 'eng',
-        'spa': 'spa', 'es': 'spa',
-        'fre': 'fra', 'fra': 'fra', 'fr': 'fra',
-        'ger': 'deu', 'deu': 'deu', 'de': 'deu',
-        'ita': 'ita', 'it': 'ita',
-        'jpn': 'jpn', 'ja': 'jpn',
-        'kor': 'kor', 'ko': 'kor',
-        'chi': 'chi_sim', 'zho': 'chi_sim',
-        'rus': 'rus', 'ru': 'rus',
-        'ara': 'ara', 'ar': 'ara',
-        'dut': 'nld', 'nld': 'nld', 'nl': 'nld',
-        'dan': 'dan', 'da': 'dan',
-        'fin': 'fin', 'fi': 'fin',
-        'nor': 'nor', 'no': 'nor',
-        'swe': 'swe', 'sv': 'swe',
-        'pol': 'pol', 'pl': 'pol',
-        'tur': 'tur', 'tr': 'tur',
-        'tha': 'tha', 'th': 'tha',
-    }
-    return mapping.get(lang_code, 'eng')
 
 
 # --- Library file test ---
@@ -297,8 +275,7 @@ def on_worker_process(data):
                 continue
 
             # OCR the .sup to .srt
-            tess_lang = _map_language_to_tesseract(lang)
-            if not _ocr_sup_to_srt(sup_file, srt_file, tess_lang):
+            if not _ocr_sup_to_srt(sup_file, srt_file, lang):
                 logger.warning("[WORKER] OCR failed for sub s:%d, keeping as-is", sub_idx)
                 bitmap_failed_indices.add(sub_idx)
                 continue
@@ -311,6 +288,9 @@ def on_worker_process(data):
             })
 
         # Phase 2: Build FFmpeg command
+        # Only mark as processed if ALL bitmap subs were successfully OCR'd
+        all_bitmap_converted = len(bitmap_failed_indices) == 0
+
         ffmpeg_args = [
             '-hide_banner',
             '-loglevel', 'info',
@@ -326,8 +306,13 @@ def on_worker_process(data):
         # Advanced options
         ffmpeg_args += ['-strict', '-2', '-max_muxing_queue_size', '4096']
 
-        # Metadata tag
-        ffmpeg_args += ['-metadata', '{}=processed'.format(PROCESSED_TAG)]
+        # Metadata tag — only write if ALL conversions succeeded
+        if all_bitmap_converted:
+            ffmpeg_args += ['-metadata', '{}=processed'.format(PROCESSED_TAG)]
+            logger.info("[WORKER] All bitmap subs converted, will write processed tag")
+        else:
+            logger.warning("[WORKER] %d bitmap sub(s) failed OCR, NOT writing processed tag (will retry next run)",
+                           len(bitmap_failed_indices))
 
         # Map all non-subtitle streams (video, audio, etc) as copy
         for s in all_streams:

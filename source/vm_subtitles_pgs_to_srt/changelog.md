@@ -1,3 +1,9 @@
+**<span style="color:#56adda">0.2.0</span>** *(marcosviniciusi)* - Use pgsrip CLI, fix tag-on-failure bug
+- FIX: Use pgsrip CLI subprocess instead of Python import to avoid importlib_metadata conflict with otel plugin. The otel plugin's bundled importlib_metadata backport corrupts the import system, making `import pgsrip` fail with `ModuleNotFoundError` inside Unmanic.
+- FIX: Only write `UNMANIC_SUBS_TO_SRT=processed` tag when ALL bitmap subtitles are successfully OCR'd. Previously the tag was written even when OCR failed, permanently blocking retries.
+- FIX: `_is_already_processed()` now re-processes files that have the processed tag but still contain bitmap (PGS/VOBSUB) subtitles (from previous failed OCR runs).
+- Removed unused Python module imports (json, babelfish) and duplicate PATH setup code.
+
 **<span style="color:#56adda">0.1.5</span>** *(marcosviniciusi)* - Fix pgsrip API call
 - FIX: Use `Sup(path)` object instead of raw string path when calling `pgsrip.rip()`. Fixes `'str' object has no attribute 'get_pgs_medias'` error.
 
