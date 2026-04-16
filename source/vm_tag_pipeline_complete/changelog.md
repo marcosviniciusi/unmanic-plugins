@@ -1,3 +1,7 @@
+**<span style="color:#56adda">0.2.2</span>** *(marcosviniciusi)*
+- Fix: Skip invalid `-c:t:N` and `-c:d:N` FFmpeg specifiers for attachment and data streams
+- Prevents FFmpeg errors when processing files with embedded fonts (e.g., anime MKV with TTF attachments)
+
 **<span style="color:#56adda">0.2.0</span>** *(marcosviniciusi)*
 - Changed tag from `UNMANIC_FULL_PIPELINE` to `UNMANIC_FULL_PIPELINE_V2` to force reprocessing of files from pipeline v1 (before OCR subtitle plugin)
 

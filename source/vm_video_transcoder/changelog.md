@@ -1,3 +1,7 @@
+**<span style="color:#56adda">0.3.3</span>** *(marcosviniciusi)*
+- Fix: Skip invalid `-c:t:N` and `-c:d:N` FFmpeg specifiers for attachment and data streams
+- Prevents FFmpeg errors when processing files with embedded fonts (e.g., anime MKV with TTF attachments)
+
 **<span style="color:#56adda">0.3.2</span>** *(marcosviniciusi)*
 - Add QSV Gen11+ encoder with 8-bit/10-bit profile selection (Tiger Lake and newer)
 - New "Profile" dropdown in standard mode: Auto (detect from source), Main (force 8-bit), Main10 (force 10-bit)

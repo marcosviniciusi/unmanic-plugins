@@ -1,3 +1,7 @@
+**<span style="color:#56adda">1.2.1</span>** *(marcosviniciusi)*
+- Fix: Skip invalid `-c:t:N` and `-c:d:N` FFmpeg specifiers for attachment and data streams
+- Prevents FFmpeg errors when processing files with embedded fonts (e.g., anime MKV with TTF attachments)
+
 **<span style="color:#56adda">1.1.0</span>** *(marcosviniciusi)*
 - Renamed plugin from `dts_to_dd` to `audio_transcoder` for unique identification
 - Updated plugin ID, name and tags to avoid conflicts with official repository

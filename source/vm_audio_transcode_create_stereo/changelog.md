@@ -1,3 +1,7 @@
+**<span style="color:#56adda">0.2.2</span>** *(marcosviniciusi)*
+- Fix: Skip invalid `-c:t:N` and `-c:d:N` FFmpeg specifiers for attachment and data streams
+- Prevents FFmpeg errors when processing files with embedded fonts (e.g., anime MKV with TTF attachments)
+
 **<span style="color:#56adda">0.2.0</span>** *(marcosviniciusi)*
 - Added 3-layer anti-reprocessing mechanism:
   - Layer 1: Format-level metadata tag `UNMANIC_STEREO=processed` (fastest skip)
