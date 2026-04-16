@@ -22,6 +22,7 @@
 
 """
 import logging
+import os
 
 from vm_video_transcoder.lib import tools
 from vm_video_transcoder.lib.encoders.libx import LibxEncoder
@@ -347,6 +348,11 @@ class PluginStreamMapper(StreamMapper):
                     # Remove it
                     return True
 
+        # MKV (Matroska) does not support data streams — they must be stripped
+        if codec_type in ['data']:
+            if self.output_file and os.path.splitext(self.output_file)[1].lower() in ('.mkv', '.mka', '.mks'):
+                return True
+
         # If the stream is a video, add a final check if the codec is already the correct format
         #   (Ignore checks if force transcode is set)
         if codec_type in ['video'] and codec_name == self.settings.get_setting('video_codec'):
@@ -458,6 +464,14 @@ class PluginStreamMapper(StreamMapper):
                     stream_encoding += stream_args.get("stream_args", [])
 
         elif codec_type in ['data']:
+            # MKV doesn't support data streams — strip them automatically
+            if self.output_file and os.path.splitext(self.output_file)[1].lower() in ('.mkv', '.mka', '.mks'):
+                tools.append_worker_log(self.worker_log,
+                    "Stream mapper stripping data stream {} (not supported by MKV container)".format(stream_id))
+                return {
+                    'stream_mapping':  [],
+                    'stream_encoding': [],
+                }
             if not self.settings.get_setting('apply_smart_filters'):
                 # If smart filters are not enabled, return 'False' to let the default mapping just copy the data stream
                 return False

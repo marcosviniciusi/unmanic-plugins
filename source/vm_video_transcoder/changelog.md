@@ -1,3 +1,8 @@
+**<span style="color:#56adda">0.3.4</span>** *(marcosviniciusi)*
+- Fix: Strip data streams (`bin_data`) when output container is MKV (Matroska doesn't support data streams)
+- Fixes failed conversions for MP4 files with embedded text data streams (e.g., Bilibili anime downloads)
+- No impact on files without data streams or non-MKV output formats
+
 **<span style="color:#56adda">0.3.3</span>** *(marcosviniciusi)*
 - Fix: Skip invalid `-c:t:N` and `-c:d:N` FFmpeg specifiers for attachment and data streams
 - Prevents FFmpeg errors when processing files with embedded fonts (e.g., anime MKV with TTF attachments)
